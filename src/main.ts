@@ -1,19 +1,19 @@
 import { Board } from "./board";
 import { Player } from "./player";
+import { Interest } from "./interest";
 
 const canvas = document.getElementById("myCanvas") as HTMLCanvasElement;
 const ctx = canvas.getContext("2d");
 
-// placeholders
-// const board: Board = {
-//   ...defaultBoard,
-//   height: canvas.width,
-//   width: canvas.width,
-//   color: "#2B2118",
-// };
-const board: Board = new Board(0, 0, 500, 500, "#2B2118", ctx);
+const BOARD_SIZE = 500;
+const INTEREST_COUNT = 5;
 
-const player: Player = new Player(250, 250, "#F7F3E3", ctx);
+const board: Board = new Board(0, 0, BOARD_SIZE, BOARD_SIZE, "red", ctx);
+const player: Player = new Player(BOARD_SIZE / 2, BOARD_SIZE / 2, "#F7F3E3", ctx);
+const interests = [];
+for (let i = 0; i < INTEREST_COUNT; i++) {
+  const interest: Interest = new Player(250, 250, "#F7F3E3", ctx);
+}
 
 function draw() {
   board.draw();
