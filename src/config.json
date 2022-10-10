@@ -1,4 +1,5 @@
 {
   "boardHeight": 50,
-  "boardWidth": 50
+  "boardWidth": 50,
+  "WORK_DIST_THRESHOLD": 2
 }

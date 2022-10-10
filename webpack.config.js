@@ -2,6 +2,7 @@ module.exports = {
   entry: "./src/app.ts",
   mode: "development",
   output: {
+    publicPath: "/dist/",
     path: `${__dirname}/dist`,
     filename: "bundle.js",
   },
@@ -31,4 +32,19 @@ module.exports = {
   resolve: {
     extensions: [".tsx", ".ts", ".js"],
   },
+  // devServer: {
+  //   // Serve index.html as the base
+  //   // contentBase: `${__dirname}/public`,
+
+  //   // Enable compression
+  //   // compress: true,
+
+  //   // Enable hot reloading
+  //   hot: true,
+
+  //   port: 3000,
+
+  //   // // Public path is root of content base
+  //   // publicPath: "/",
+  // },
 };

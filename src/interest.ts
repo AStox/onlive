@@ -1,22 +1,47 @@
+import { Coords } from "./utils";
+import { Map } from "./map";
+import { Area } from "./area";
+
 export class Interest {
-  x: number;
-  y: number;
+  position: Coords;
   color: string;
+  weight: number;
   ctx: CanvasRenderingContext2D;
   size = 6;
+  area: Area;
 
-  constructor(_x: number, _y: number, _color: string, _ctx: CanvasRenderingContext2D) {
-    this.x = _x;
-    this.y = _y;
+  constructor(
+    _position: Coords,
+    _color: string,
+    _weight: number,
+    _ctx: CanvasRenderingContext2D,
+    _area?: Area
+  ) {
+    this.position = _position;
     this.color = _color;
+    this.weight = _weight;
     this.ctx = _ctx;
+    this.area = _area;
+  }
+
+  tick() {
+    this.draw();
   }
 
   draw() {
     this.ctx.beginPath();
-    this.ctx.rect(this.x - this.size / 2, this.y - this.size / 2, this.size, this.size);
+    this.ctx.rect(
+      this.position.x - this.weight / 2,
+      this.position.y - this.weight / 2,
+      this.weight,
+      this.weight
+    );
     this.ctx.fillStyle = this.color;
     this.ctx.fill();
     this.ctx.closePath();
+  }
+
+  kill(map: Map) {
+    map.interests;
   }
 }
