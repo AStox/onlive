@@ -27,7 +27,6 @@ export class Player {
     let interests = [] as Interest[];
     // TODO: change this so that map.interests in an array of all interests within the 9 gridcell square of influence. currently this will include interests within areas that center in the SoI but expand beyond it.
     map.areas.forEach((area) => (interests = interests.concat(area.interests)));
-    console.log(interests);
     interests.forEach((interest) => {
       if (dist(this.position, interest.position) <= config.WORK_DIST_THRESHOLD + interest.size) {
         this.currentInterest = interest;

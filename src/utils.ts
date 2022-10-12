@@ -9,13 +9,6 @@ export function pixelCoords(point: Coords) {
   const pixelSize = config.PIXEL_SIZE;
   const size = 100;
   const screenSize = 500;
-  console.log(
-    point.x,
-    point.x / screenSize,
-    point.x / (screenSize / size),
-    Math.floor(point.x / (screenSize / size)),
-    Math.floor(point.x / (screenSize / size)) * (screenSize / size)
-  );
   let x = Math.floor(point.x / (screenSize / size)) * (screenSize / size);
   let y = (Math.floor(point.y / (screenSize / size)) * screenSize) / size;
   x = Math.floor(point.x / pixelSize) * pixelSize;

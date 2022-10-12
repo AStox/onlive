@@ -2,22 +2,34 @@ import { Board } from "./board";
 import { Map } from "./map";
 import { Player } from "./player";
 import { Interest } from "./interest";
-import { pixelCoords, randomInt } from "./utils";
+import { Coords, pixelCoords, randomInt } from "./utils";
 import { Area } from "./area";
 import config from "./config.json";
 
 const CANVAS_SIZE = config.CANVAS_SIZE;
+const TRANSLATTION_AMOUNT = config.TRANSLATTION_AMOUNT;
 const canvas = document.getElementById("myCanvas") as HTMLCanvasElement;
 canvas.setAttribute("width", `${CANVAS_SIZE}`);
 canvas.setAttribute("height", `${CANVAS_SIZE}`);
 // canvas.addEventListener("click", function () {}, false);
-document.addEventListener("keypress", function (event) {
+document.addEventListener("keydown", function (event) {
   if (event.key == "=") {
     zoomIn();
   }
   if (event.key == "-") {
-    console.log("ooo");
     zoomOut();
+  }
+  if (event.key === "ArrowUp" || event.key === "w") {
+    translate({ x: 0, y: TRANSLATTION_AMOUNT });
+  }
+  if (event.key === "ArrowLeft" || event.key === "a") {
+    translate({ x: TRANSLATTION_AMOUNT, y: 0 });
+  }
+  if (event.key === "ArrowDown" || event.key === "s") {
+    translate({ x: 0, y: -TRANSLATTION_AMOUNT });
+  }
+  if (event.key === "ArrowRight" || event.key === "d") {
+    translate({ x: -TRANSLATTION_AMOUNT, y: 0 });
   }
 });
 const ctx = canvas.getContext("2d");
@@ -50,15 +62,19 @@ function zoomOut() {
   ctx.translate(CANVAS_SIZE / 2, CANVAS_SIZE / 2);
 }
 
+function translate(amount: Coords) {
+  ctx.translate(amount.x, amount.y);
+}
+
 function displayGrid() {
-  for (let i = 0; i < CANVAS_SIZE; i++) {
+  for (let i = 0; i < CANVAS_SIZE; i += config.PIXEL_SIZE) {
     ctx.beginPath();
     ctx.rect(pixelCoords({ x: i, y: 0 }).x, 0, 1, CANVAS_SIZE);
     ctx.fillStyle = "black";
     ctx.fill();
     ctx.closePath();
   }
-  for (let i = 0; i < CANVAS_SIZE; i++) {
+  for (let i = 0; i < CANVAS_SIZE; i += config.PIXEL_SIZE) {
     ctx.beginPath();
     ctx.rect(0, pixelCoords({ x: 0, y: i }).y, CANVAS_SIZE, 1);
     ctx.fillStyle = "black";
