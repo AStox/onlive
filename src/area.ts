@@ -1,11 +1,11 @@
 import { Interest } from "./interest";
-import { randomInt } from "./utils";
+import { dist, randomInt } from "./utils";
 
 export class Area {
   x: number;
   y: number;
   r: number;
-  interests: Interest[];
+  interests = [] as Interest[];
   ctx: CanvasRenderingContext2D;
 
   constructor(_x: number, _y: number, _r: number, _ctx: CanvasRenderingContext2D) {
@@ -28,20 +28,27 @@ export class Area {
   }
 
   tick() {
-    this.draw();
+    if (Math.random() > 0.9) {
+      this.generateInterest();
+    }
+    this.interests.forEach((interest) => interest.tick());
+    // this.draw();
   }
 
   generateInterest() {
-    if (Math.random() > 0.95) {
+    const x = randomInt(this.x - this.r, this.x + this.r);
+    const y = randomInt(this.y - this.r, this.y + this.r);
+    if (dist({ x, y }, { x: this.x, y: this.y }) <= this.r) {
       this.interests.push(
         new Interest(
           {
-            x: randomInt(this.x - this.r, this.x + this.r),
-            y: randomInt(this.y - this.r, this.y + this.r),
+            x,
+            y,
           },
           "#A8763E",
-          2,
-          this.ctx
+          1,
+          this.ctx,
+          this
         )
       );
     }
@@ -50,7 +57,7 @@ export class Area {
   draw() {
     this.ctx.beginPath();
     this.ctx.arc(this.x, this.y, this.r, 0, Math.PI * 2);
-    this.ctx.strokeStyle = "black";
+    this.ctx.strokeStyle = "white";
     this.ctx.stroke();
     this.ctx.closePath();
   }

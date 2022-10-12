@@ -1,6 +1,6 @@
 import { Interest } from "./interest";
 import { Map, objectType } from "./map";
-import { Coords, dist, normalize } from "./utils";
+import { Coords, dist, normalize, pixelCoords } from "./utils";
 import config from "./config.json";
 
 export class Player {
@@ -8,7 +8,7 @@ export class Player {
   position: Coords;
   color: string;
   ctx: CanvasRenderingContext2D;
-  size = 6;
+  size = config.PIXEL_SIZE;
   // currentDestination: {x: number, y: number}
   currentInterest: Interest | null;
   working: boolean;
@@ -23,13 +23,18 @@ export class Player {
   tick(map: Map) {
     // Check proximity to interests
     this.currentInterest = null;
-    map.interests.forEach((interest) => {
+    // TODO: This should just check proximity of interests within 9 gridcell perimeter.
+    let interests = [] as Interest[];
+    // TODO: change this so that map.interests in an array of all interests within the 9 gridcell square of influence. currently this will include interests within areas that center in the SoI but expand beyond it.
+    map.areas.forEach((area) => (interests = interests.concat(area.interests)));
+    console.log(interests);
+    interests.forEach((interest) => {
       if (dist(this.position, interest.position) <= config.WORK_DIST_THRESHOLD + interest.size) {
         this.currentInterest = interest;
       }
     });
     if (!this.currentInterest) {
-      this.move(map.interests);
+      this.move(interests);
     }
     if (this.currentInterest) {
       this.work(this.currentInterest, map);
@@ -39,12 +44,8 @@ export class Player {
 
   draw() {
     this.ctx.beginPath();
-    this.ctx.rect(
-      this.position.x - this.size / 2,
-      this.position.y - this.size / 2,
-      this.size,
-      this.size
-    );
+    const coords = { x: this.position.x - this.size / 2, y: this.position.y - this.size / 2 };
+    this.ctx.rect(pixelCoords(coords).x, pixelCoords(coords).y, this.size, this.size);
     this.ctx.fillStyle = this.color;
     this.ctx.fill();
     this.ctx.closePath();
@@ -67,8 +68,11 @@ export class Player {
         normalize(interest.position.x - this.position.x, interest.position.y - this.position.y).y;
     });
     const finalMove = normalize(newX, newY);
+    // console.log(finalMoves);
+    // if (newX && newY) {
     this.position.x += finalMove.x * this.MAX_SPEED;
     this.position.y += finalMove.y * this.MAX_SPEED;
+    // }
   }
 
   work(interest: Interest, map: Map) {

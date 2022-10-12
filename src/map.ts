@@ -15,8 +15,7 @@ export class Map {
   width: number;
   color: string;
   players: Player[];
-  interests: Interest[];
-  areas: Area[];
+  areas = [] as Area[];
   ctx: CanvasRenderingContext2D;
 
   constructor(
@@ -35,7 +34,6 @@ export class Map {
     this.width = _width;
     this.color = _color;
     this.players = _players;
-    this.interests = _interests;
     this.ctx = _ctx;
   }
 
@@ -53,7 +51,9 @@ export class Map {
 
   remove(type: objectType, object: Player | Interest) {
     if (type == objectType.interest) {
-      this.interests = this.interests.filter((interest) => object !== interest);
+      (object as Interest).area.interests = (object as Interest).area.interests.filter(
+        (interest) => object !== interest
+      );
     } else if (type == objectType.player) {
       this.players = this.players.filter((player) => object !== player);
     }

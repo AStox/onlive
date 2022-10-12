@@ -1,5 +1,5 @@
 {
-  "boardHeight": 50,
-  "boardWidth": 50,
-  "WORK_DIST_THRESHOLD": 2
+  "CANVAS_SIZE": 1000,
+  "WORK_DIST_THRESHOLD": 2,
+  "PIXEL_SIZE": 10
 }
