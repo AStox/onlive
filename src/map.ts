@@ -51,6 +51,7 @@ export class Map {
 
   remove(type: objectType, object: Player | Interest) {
     if (type == objectType.interest) {
+      console.log(object);
       (object as Interest).area.interests = (object as Interest).area.interests.filter(
         (interest) => object !== interest
       );

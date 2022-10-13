@@ -1,4 +1,4 @@
-import { Interest } from "./interest";
+import { Interest, InterestType, interestTypes } from "./interest";
 import { dist, randomInt } from "./utils";
 
 export class Area {
@@ -7,12 +7,20 @@ export class Area {
   r: number;
   interests = [] as Interest[];
   ctx: CanvasRenderingContext2D;
+  interestType: InterestType;
 
-  constructor(_x: number, _y: number, _r: number, _ctx: CanvasRenderingContext2D) {
+  constructor(
+    _x: number,
+    _y: number,
+    _r: number,
+    _ctx: CanvasRenderingContext2D,
+    _type: InterestType
+  ) {
     this.x = _x;
     this.y = _y;
     this.r = _r;
     this.ctx = _ctx;
+    this.interestType = _type;
   }
 
   static randomArea(
@@ -24,7 +32,13 @@ export class Area {
     rMax: number,
     _ctx: CanvasRenderingContext2D
   ) {
-    return new Area(randomInt(xMin, xMax), randomInt(yMin, yMax), randomInt(rMin, rMax), _ctx);
+    return new Area(
+      randomInt(xMin, xMax),
+      randomInt(yMin, yMax),
+      randomInt(rMin, rMax),
+      _ctx,
+      Interest.randomInterestType()
+    );
   }
 
   tick() {
@@ -45,9 +59,10 @@ export class Area {
             x,
             y,
           },
-          "#A8763E",
+          this.interestType.color,
           1,
           this.ctx,
+          this.interestType,
           this
         )
       );
