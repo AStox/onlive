@@ -18,21 +18,34 @@ export const interestTypes: { [key: string]: InterestType } = {
 };
 
 export class Interest {
+  // Basics
+  ctx: CanvasRenderingContext2D;
   position: Coords;
   color: string;
   weight: number;
-  ctx: CanvasRenderingContext2D;
   area: Area;
   size = config.PIXEL_SIZE;
   type: InterestType;
 
+  //  Resources
+  resources: number;
+  startingResources: number;
+  resourcesGrowthRate: number;
+  maxResources: number;
+  baseHarvestRate: number;
+
   constructor(
+    _ctx: CanvasRenderingContext2D,
     _position: Coords,
     _color: string,
     _weight: number,
-    _ctx: CanvasRenderingContext2D,
     _type: InterestType,
-    _area?: Area
+    _area: Area,
+    _resources = 0,
+    _startingResources = 0,
+    _resourcesGrowthRate = 10,
+    _maxResources = 100,
+    _baseHarvestRate = 10
   ) {
     this.position = _position;
     this.color = _color;
@@ -40,6 +53,11 @@ export class Interest {
     this.ctx = _ctx;
     this.type = _type;
     this.area = _area;
+    this.resources = _resources;
+    this.startingResources = _startingResources;
+    this.resourcesGrowthRate = _resourcesGrowthRate;
+    this.maxResources = _maxResources;
+    this.baseHarvestRate = _baseHarvestRate;
   }
 
   static randomInterestType() {

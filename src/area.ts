@@ -55,13 +55,13 @@ export class Area {
     if (dist({ x, y }, { x: this.x, y: this.y }) <= this.r) {
       this.interests.push(
         new Interest(
+          this.ctx,
           {
             x,
             y,
           },
           this.interestType.color,
           1,
-          this.ctx,
           this.interestType,
           this
         )
