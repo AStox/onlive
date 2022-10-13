@@ -49,14 +49,9 @@ export class Map {
     this.ctx.closePath();
   }
 
-  remove(type: objectType, object: Player | Interest) {
-    if (type == objectType.interest) {
-      console.log(object);
-      (object as Interest).area.interests = (object as Interest).area.interests.filter(
-        (interest) => object !== interest
-      );
-    } else if (type == objectType.player) {
-      this.players = this.players.filter((player) => object !== player);
-    }
+  static remove(object: Interest) {
+    (object as Interest).area.interests = (object as Interest).area.interests.filter(
+      (interest) => object !== interest
+    );
   }
 }

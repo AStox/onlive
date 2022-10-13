@@ -3,6 +3,9 @@ import { Map, objectType } from "./map";
 import { Coords, dist, normalize, pixelCoords } from "./utils";
 import config from "./config.json";
 
+type Inventory = {
+  resources: { [key: string]: number };
+};
 export class Player {
   MAX_SPEED: number;
   position: Coords;
@@ -13,11 +16,14 @@ export class Player {
   currentInterest: Interest | null;
   working: boolean;
 
+  inventory: Inventory;
+
   constructor(_position: Coords, _color: string, _ctx: CanvasRenderingContext2D) {
     this.position = _position;
     this.color = _color;
     this.ctx = _ctx;
     this.MAX_SPEED = 5;
+    this.inventory = { resources: {} };
   }
 
   tick(map: Map) {
@@ -39,6 +45,7 @@ export class Player {
       this.work(this.currentInterest, map);
     }
     this.draw();
+    console.log(this.inventory);
   }
 
   draw() {
@@ -75,7 +82,12 @@ export class Player {
   }
 
   work(interest: Interest, map: Map) {
-    map.remove(objectType.interest, interest);
+    this.inventory.resources[interest.type.type] =
+      this.inventory.resources[interest.type.type] >= 0
+        ? this.inventory.resources[interest.type.type] +
+          Math.min(interest.baseHarvestRate, interest.resources)
+        : 0;
+    interest.resources -= interest.baseHarvestRate;
   }
 
   settle() {}

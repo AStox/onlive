@@ -2,19 +2,31 @@ import { Coords, pixelCoords } from "./utils";
 import { Map } from "./map";
 import { Area } from "./area";
 import config from "./config.json";
+import { Resource, resourceTypes } from "./resource";
 
 export type InterestType = {
   type: string;
   name: string;
   color: string;
+  resource: Resource;
 };
 
 export const interestTypes: { [key: string]: InterestType } = {
-  tree: { type: "TREE", name: "Tree", color: "#1B998B" },
-  berryBush: { type: "BERRY_BUSH", name: "Berry Bush", color: "#EE2E31" },
-  stone: { type: "STONE", name: "Stone", color: "#809BCE" },
-  vegetable: { type: "VEGETABLE", name: "vegetable", color: "#9381FF" },
-  herb: { type: "HERB", name: "herb", color: "#5B8E7D" },
+  tree: { type: "TREE", name: "Tree", color: "#1B998B", resource: resourceTypes.wood },
+  berryBush: {
+    type: "BERRY_BUSH",
+    name: "Berry Bush",
+    color: "#EE2E31",
+    resource: resourceTypes.berry,
+  },
+  stone: { type: "STONE", name: "Stone", color: "#809BCE", resource: resourceTypes.stone },
+  vegetable: {
+    type: "VEGETABLE",
+    name: "vegetable",
+    color: "#9381FF",
+    resource: resourceTypes.vegetable,
+  },
+  herb: { type: "HERB", name: "herb", color: "#5B8E7D", resource: resourceTypes.herb },
 };
 
 export class Interest {
@@ -29,10 +41,10 @@ export class Interest {
 
   //  Resources
   resources: number;
-  startingResources: number;
-  resourcesGrowthRate: number;
+  growthRate: number;
   maxResources: number;
   baseHarvestRate: number;
+  shouldGrow: boolean;
 
   constructor(
     _ctx: CanvasRenderingContext2D,
@@ -41,11 +53,11 @@ export class Interest {
     _weight: number,
     _type: InterestType,
     _area: Area,
-    _resources = 0,
-    _startingResources = 0,
-    _resourcesGrowthRate = 10,
-    _maxResources = 100,
-    _baseHarvestRate = 10
+    _resources = 1,
+    _growthRate = 1,
+    _maxResources = 500,
+    _baseHarvestRate = 20,
+    _shouldGrow = true
   ) {
     this.position = _position;
     this.color = _color;
@@ -54,21 +66,24 @@ export class Interest {
     this.type = _type;
     this.area = _area;
     this.resources = _resources;
-    this.startingResources = _startingResources;
-    this.resourcesGrowthRate = _resourcesGrowthRate;
+    this.growthRate = _growthRate;
     this.maxResources = _maxResources;
     this.baseHarvestRate = _baseHarvestRate;
+    this.shouldGrow = _shouldGrow;
   }
 
   static randomInterestType() {
     const enumValues = Object.keys(interestTypes);
     const randomIndex = Math.floor(Math.random() * enumValues.length);
     const randomEnumValue = enumValues[randomIndex];
-    console.log(interestTypes[randomEnumValue]);
     return interestTypes[randomEnumValue];
   }
 
   tick() {
+    if (this.resources <= 0) {
+      this.kill();
+    }
+    this.grow();
     this.draw();
   }
 
@@ -79,5 +94,15 @@ export class Interest {
     this.ctx.fillStyle = this.color;
     this.ctx.fill();
     this.ctx.closePath();
+  }
+
+  grow() {
+    if (this.shouldGrow) {
+      this.resources += this.growthRate;
+    }
+  }
+
+  kill() {
+    Map.remove(this);
   }
 }
