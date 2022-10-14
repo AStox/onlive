@@ -9,24 +9,70 @@ export type InterestType = {
   name: string;
   color: string;
   resource: Resource;
+  flavorTexts: string[];
 };
 
 export const interestTypes: { [key: string]: InterestType } = {
-  tree: { type: "TREE", name: "Tree", color: "#1B998B", resource: resourceTypes.wood },
+  tree: {
+    type: "TREE",
+    name: "Tree",
+    color: "#1B998B",
+    resource: resourceTypes.wood,
+    flavorTexts: [
+      "chopped log",
+      "gathered sticks",
+      "snapped a branch into smaller pieces",
+      "felled a tree",
+    ],
+  },
   berryBush: {
     type: "BERRY_BUSH",
     name: "Berry Bush",
     color: "#EE2E31",
     resource: resourceTypes.berry,
+    flavorTexts: [
+      "picked black berries",
+      "gorged on blue berries",
+      "ate a handful of wild berries",
+      "ate strawberry berries they found",
+    ],
   },
-  stone: { type: "STONE", name: "Stone", color: "#809BCE", resource: resourceTypes.stone },
+  stone: {
+    type: "STONE",
+    name: "Stone",
+    color: "#809BCE",
+    resource: resourceTypes.stone,
+    flavorTexts: [
+      "gathered stones",
+      "looked at some nice rocks",
+      "picked up an interesting rock and put it in their satchel",
+      "threw a rock and a larger rock",
+    ],
+  },
   vegetable: {
     type: "VEGETABLE",
     name: "vegetable",
     color: "#9381FF",
     resource: resourceTypes.vegetable,
+    flavorTexts: [
+      "uprooted a wild yam",
+      "found a wild carrot",
+      "tried eating a scrawny turnip",
+      "dug up some wild potatoes",
+    ],
   },
-  herb: { type: "HERB", name: "herb", color: "#5B8E7D", resource: resourceTypes.herb },
+  herb: {
+    type: "HERB",
+    name: "herb",
+    color: "#5B8E7D",
+    resource: resourceTypes.herb,
+    flavorTexts: [
+      "picked some strong smelling leaves",
+      "stuffed a handful of pretty leaves in their satchel",
+      "carefully plucked some wild herbs",
+      "grabbed some dusty plants. Could be useful?",
+    ],
+  },
 };
 
 export class Interest {

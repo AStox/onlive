@@ -1,6 +1,6 @@
 import { Interest } from "./interest";
 import { Map, objectType } from "./map";
-import { Coords, dist, normalize, pixelCoords } from "./utils";
+import { Coords, dist, normalize, pixelCoords, randomInt } from "./utils";
 import config from "./config.json";
 
 type Inventory = {
@@ -39,13 +39,13 @@ export class Player {
       }
     });
     if (!this.currentInterest) {
-      this.move(interests);
+      const greatestInterest = this.move(interests);
+      console.log(`walking towards ${greatestInterest?.type.name}`);
     }
     if (this.currentInterest) {
       this.work(this.currentInterest, map);
     }
     this.draw();
-    console.log(this.inventory);
   }
 
   draw() {
@@ -57,28 +57,36 @@ export class Player {
     this.ctx.closePath();
   }
 
-  move(interests: Interest[]) {
+  move(interests: Interest[]): Interest {
     let newX = 0;
     let newY = 0;
+    let greatestInterest: Interest;
+    let greatestPull = 0;
     interests.forEach((interest) => {
       // TODO: be drawn to paths
 
       // TODO: create path
 
       // move player based on interest locations
-      newX +=
+      const x =
         (190 / dist(this.position, interest.position) ** 2) *
         normalize(interest.position.x - this.position.x, interest.position.y - this.position.y).x;
-      newY +=
+      const y =
         (190 / dist(this.position, interest.position) ** 2) *
         normalize(interest.position.x - this.position.x, interest.position.y - this.position.y).y;
+      const length = dist({ x: 0, y: 0 }, { x, y });
+      if (length > greatestPull) {
+        greatestPull = length;
+        greatestInterest = interest;
+      }
+
+      newX += x;
+      newY += y;
     });
     const finalMove = normalize(newX, newY);
-    // console.log(finalMoves);
-    // if (newX && newY) {
     this.position.x += finalMove.x * this.MAX_SPEED;
     this.position.y += finalMove.y * this.MAX_SPEED;
-    // }
+    return greatestInterest;
   }
 
   work(interest: Interest, map: Map) {
@@ -88,6 +96,7 @@ export class Player {
           Math.min(interest.baseHarvestRate, interest.resources)
         : 0;
     interest.resources -= interest.baseHarvestRate;
+    console.log(interest.type.flavorTexts[randomInt(0, interest.type.flavorTexts.length)]);
   }
 
   settle() {}

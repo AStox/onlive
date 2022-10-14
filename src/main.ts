@@ -51,7 +51,7 @@ function tick() {
   map.areas.forEach((area) => area.tick());
   displayGrid();
 }
-setInterval(tick, 42);
+setInterval(tick, 420);
 
 function zoomIn() {
   ctx.translate(-CANVAS_SIZE / 2, -CANVAS_SIZE / 2);
