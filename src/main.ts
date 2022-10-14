@@ -36,12 +36,12 @@ const ctx = canvas.getContext("2d");
 // zoomIn();
 // zoomIn();
 
-const map: Map = new Map(-10000, -10000, 20000, 20000, "#2B2118", ctx);
+const map: Map = new Map(-10000, -10000, 20000, 20000, "#2B2118", "black", ctx);
 const player: Player = new Player({ x: CANVAS_SIZE / 2, y: CANVAS_SIZE / 2 }, "#F7F3E3", ctx);
 const players = [player];
-const area1 = Area.randomArea(0, 250, 0, 250, 50, 225, ctx);
-const area2 = Area.randomArea(0, 500, 0, 500, 50, 225, ctx);
-const area3 = Area.randomArea(0, 500, 0, 500, 50, 225, ctx);
+const area1 = Area.randomArea(0, CANVAS_SIZE, 0, CANVAS_SIZE, 50, CANVAS_SIZE, ctx);
+const area2 = Area.randomArea(0, CANVAS_SIZE, 0, CANVAS_SIZE, 50, CANVAS_SIZE, ctx);
+const area3 = Area.randomArea(0, CANVAS_SIZE, 0, CANVAS_SIZE, 50, CANVAS_SIZE, ctx);
 map.areas = [area1, area2, area3];
 map.players = players;
 
@@ -51,7 +51,7 @@ function tick() {
   map.areas.forEach((area) => area.tick());
   displayGrid();
 }
-setInterval(tick, 420);
+setInterval(tick, 200);
 
 function zoomIn() {
   ctx.translate(-CANVAS_SIZE / 2, -CANVAS_SIZE / 2);

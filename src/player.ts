@@ -38,6 +38,8 @@ export class Player {
         this.currentInterest = interest;
       }
     });
+
+    // move towards interest or work on interest
     if (!this.currentInterest) {
       const greatestInterest = this.move(interests);
       console.log(`walking towards ${greatestInterest?.type.name}`);
@@ -45,6 +47,7 @@ export class Player {
     if (this.currentInterest) {
       this.work(this.currentInterest, map);
     }
+
     this.draw();
   }
 

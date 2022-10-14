@@ -13,17 +13,22 @@ export class Map {
   y: number;
   height: number;
   width: number;
-  color: string;
+  dayColor: string;
+  nightColor: string;
   players: Player[];
   areas = [] as Area[];
   ctx: CanvasRenderingContext2D;
+  time = 0; // 24 hour clock
+  timeChangeRate = 0.25;
+  day: boolean;
 
   constructor(
     _x: number,
     _y: number,
     _height: number,
     _width: number,
-    _color: string,
+    _dayColor: string,
+    _nightColor: string,
     _ctx: CanvasRenderingContext2D,
     _players?: Player[],
     _interests?: Interest[]
@@ -32,21 +37,34 @@ export class Map {
     this.y = _y;
     this.height = _height;
     this.width = _width;
-    this.color = _color;
+    this.dayColor = _dayColor;
+    this.nightColor = _nightColor;
     this.players = _players;
     this.ctx = _ctx;
   }
 
   tick() {
     this.draw();
+    this.passageOfTime();
+    console.log(this.day ? "daytime" : "nightime", this.time);
   }
 
   draw() {
     this.ctx.beginPath();
     this.ctx.rect(this.x, this.y, this.width, this.height);
-    this.ctx.fillStyle = this.color;
+    this.ctx.fillStyle = this.day ? this.dayColor : this.nightColor;
     this.ctx.fill();
     this.ctx.closePath();
+  }
+
+  passageOfTime() {
+    this.time += this.timeChangeRate;
+    this.time = this.time % 24;
+    if (this.time > 12) {
+      this.day = false;
+    } else {
+      this.day = true;
+    }
   }
 
   static remove(object: Interest) {
