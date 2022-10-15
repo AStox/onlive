@@ -2,7 +2,7 @@ import { Board } from "./board";
 import { Map } from "./map";
 import { Player } from "./player";
 import { Interest } from "./interest";
-import { Coords, pixelCoords, randomInt } from "./utils";
+import { Coords, perlinNoise, pixelCoords, randomInt, randomNoise } from "./utils";
 import { Area } from "./area";
 import config from "./config.json";
 
@@ -33,6 +33,7 @@ document.addEventListener("keydown", function (event) {
   }
 });
 const ctx = canvas.getContext("2d");
+const noise = randomNoise(0, 0, CANVAS_SIZE, CANVAS_SIZE, 100);
 // zoomIn();
 // zoomIn();
 
@@ -49,7 +50,7 @@ function tick() {
   map.tick();
   map.players.forEach((player) => player.tick(map));
   map.areas.forEach((area) => area.tick());
-  displayGrid();
+  // displayGrid();
 }
 setInterval(tick, 200);
 

@@ -44,3 +44,52 @@ export function normalize(x: number, y: number): { x: number; y: number } {
 export function dist(pos1: Coords, pos2: Coords) {
   return Math.sqrt((pos2.x - pos1.x) ** 2 + (pos2.y - pos1.y) ** 2);
 }
+
+/* Following canvas-based Perlin generation code originates from
+ * iron_wallaby's code at: http://www.ozoneasylum.com/30982
+ */
+export function randomNoise(x: number, y: number, width: number, height: number, alpha: number) {
+  x = x || 0;
+  y = y || 0;
+  width = width;
+  height = height;
+  alpha = alpha;
+  const canvas = document.getElementById("noise") as HTMLCanvasElement;
+  const ctx = canvas.getContext("2d");
+  const imageData = ctx.getImageData(x, y, width, height);
+  const random = Math.random;
+  const pixels = imageData.data;
+  const n = pixels.length;
+  let i = 0;
+  console.log("random noise!");
+  while (i < n) {
+    pixels[i++] = pixels[i++] = pixels[i++] = (random() * 256) | 0;
+    pixels[i++] = alpha;
+  }
+  ctx.putImageData(imageData, x, y);
+  return canvas;
+}
+
+export function perlinNoise(
+  ctx: CanvasRenderingContext2D,
+  noise: HTMLCanvasElement,
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+  alpha: number
+) {
+  noise = noise || randomNoise(x, y, width, height, alpha);
+  ctx.save();
+
+  /* Scale random iterations onto the canvas to generate Perlin noise. */
+  for (let size = 1; size <= width; size *= 2) {
+    // let x = (Math.random() * (width - size)) | 0,
+    // y = (Math.random() * (height - size)) | 0;
+    ctx.globalAlpha = 1 / size;
+    ctx.drawImage(noise, x, y, size, size, 0, 0, width, height);
+  }
+
+  ctx.restore();
+  // return canvas;
+}

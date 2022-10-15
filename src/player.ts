@@ -42,7 +42,7 @@ export class Player {
     // move towards interest or work on interest
     if (!this.currentInterest) {
       const greatestInterest = this.move(interests);
-      console.log(`walking towards ${greatestInterest?.type.name}`);
+      // console.log(`walking towards ${greatestInterest?.type.name}`);
     }
     if (this.currentInterest) {
       this.work(this.currentInterest, map);
@@ -99,7 +99,7 @@ export class Player {
           Math.min(interest.baseHarvestRate, interest.resources)
         : 0;
     interest.resources -= interest.baseHarvestRate;
-    console.log(interest.type.flavorTexts[randomInt(0, interest.type.flavorTexts.length)]);
+    // console.log(interest.type.flavorTexts[randomInt(0, interest.type.flavorTexts.length)]);
   }
 
   settle() {}
