@@ -61,7 +61,6 @@ export function randomNoise(x: number, y: number, width: number, height: number,
   const pixels = imageData.data;
   const n = pixels.length;
   let i = 0;
-  console.log("random noise!");
   while (i < n) {
     pixels[i++] = pixels[i++] = pixels[i++] = (random() * 256) | 0;
     pixels[i++] = alpha;
@@ -77,19 +76,54 @@ export function perlinNoise(
   y: number,
   width: number,
   height: number,
-  alpha: number
+  alpha: number,
+  startSize: number
 ) {
   noise = noise || randomNoise(x, y, width, height, alpha);
   ctx.save();
 
   /* Scale random iterations onto the canvas to generate Perlin noise. */
-  for (let size = 1; size <= width; size *= 2) {
+  for (let size = startSize; size <= width; size *= 2) {
     // let x = (Math.random() * (width - size)) | 0,
     // y = (Math.random() * (height - size)) | 0;
-    ctx.globalAlpha = 1 / size;
-    ctx.drawImage(noise, x, y, size, size, 0, 0, width, height);
+    ctx.globalAlpha = startSize / size;
+    ctx.drawImage(noise, x, y, size, size, -width / 2, -height / 2, width, height);
   }
 
   ctx.restore();
   // return canvas;
+}
+
+export function transformPoint(point: Coords, matrix: DOMMatrix, flip = false) {
+  const mod = flip ? -1 : 1;
+  return {
+    x: (1 / matrix.a) * point.x + matrix.c * point.y + matrix.e * mod,
+    y: matrix.b * point.x + (1 / matrix.d) * point.y + matrix.f * mod,
+  };
+}
+
+export function translatePoint(point: Coords, matrix: DOMMatrix, flip = false) {
+  const mod = flip ? -1 : 1;
+  return {
+    x: point.x + matrix.e * mod,
+    y: point.y + matrix.f * mod,
+  };
+}
+
+export function scalePoint(point: Coords, matrix: DOMMatrix, flip = false) {
+  return flip
+    ? {
+        x: (1 / matrix.a) * point.x,
+        y: (1 / matrix.d) * point.y,
+      }
+    : {
+        x: matrix.a * point.x,
+        y: matrix.d * point.y,
+      };
+}
+
+export function currentPixelSize(ctx: CanvasRenderingContext2D) {
+  const t = ctx.getTransform();
+  const pixelSize = scalePoint({ x: config.PIXEL_SIZE, y: config.PIXEL_SIZE }, t).x;
+  return pixelSize;
 }

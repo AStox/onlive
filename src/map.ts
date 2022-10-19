@@ -1,7 +1,15 @@
 import { Area } from "./area";
 import { Interest } from "./interest";
 import { Player } from "./player";
-import { perlinNoise, randomInt, randomNoise } from "./utils";
+import {
+  currentPixelSize,
+  perlinNoise,
+  randomInt,
+  randomNoise,
+  scalePoint,
+  transformPoint,
+  translatePoint,
+} from "./utils";
 import config from "./config.json";
 
 export enum objectType {
@@ -52,16 +60,15 @@ export class Map {
     this.noise = randomNoise(0, 0, this.width, this.height, 100);
     this.coords = {} as { [key: string]: Tile };
     this.colorScale = [
-      getComputedStyle(document.documentElement).getPropertyValue("--grass1"),
-      getComputedStyle(document.documentElement).getPropertyValue("--grass2"),
-      getComputedStyle(document.documentElement).getPropertyValue("--grass3"),
-      getComputedStyle(document.documentElement).getPropertyValue("--grass4"),
+      getComputedStyle(document.documentElement).getPropertyValue("--blue-dark"),
+      getComputedStyle(document.documentElement).getPropertyValue("--blue-med"),
+      getComputedStyle(document.documentElement).getPropertyValue("--blue-light"),
       getComputedStyle(document.documentElement).getPropertyValue("--grass5"),
-      getComputedStyle(document.documentElement).getPropertyValue("--grass6"),
-      getComputedStyle(document.documentElement).getPropertyValue("--grass7"),
-      getComputedStyle(document.documentElement).getPropertyValue("--grass8"),
+      getComputedStyle(document.documentElement).getPropertyValue("--grass4"),
+      getComputedStyle(document.documentElement).getPropertyValue("--grass3"),
+      getComputedStyle(document.documentElement).getPropertyValue("--grass2"),
+      getComputedStyle(document.documentElement).getPropertyValue("--grass1"),
     ];
-    console.log(this.colorScale);
   }
 
   tick() {
@@ -71,26 +78,31 @@ export class Map {
   }
 
   draw() {
+    this.ctx.globalAlpha = 1;
     this.ctx.beginPath();
-    this.ctx.rect(this.x, this.y, this.width, this.height);
+    this.ctx.rect(this.x * 10, this.y * 10, this.width * 10, this.height * 10);
     this.ctx.fillStyle = "black";
     this.ctx.fill();
     this.ctx.closePath();
-    perlinNoise(this.ctx, this.noise, 0, 0, config.CANVAS_SIZE, config.CANVAS_SIZE, 255);
+    perlinNoise(this.ctx, this.noise, 0, 0, this.width, this.height, 1, 10);
     const elevationCount = this.colorScale.length;
-    const pixelCount = config.CANVAS_SIZE / config.PIXEL_SIZE;
+    const pixelSize = currentPixelSize(this.ctx);
+    const pixelCount = config.CANVAS_SIZE / pixelSize;
+    // x coord
     for (let i = 0; i < pixelCount; i++) {
-      // x coord
+      // y coord
       for (let j = 0; j < pixelCount; j++) {
-        // y coord
-        const x = i * config.PIXEL_SIZE;
-        const y = j * config.PIXEL_SIZE;
-        const p = this.ctx.getImageData(x, y, 1, 1).data;
+        const x = i * pixelSize;
+        const y = j * pixelSize;
+        const p = this.ctx.getImageData(x + pixelSize / 2, y + pixelSize / 2, 1, 1).data;
+
         const elevationLevel = Math.floor((p[0] / 255) * elevationCount);
-        const color = elevationLevel * (255 / elevationCount);
         this.ctx.beginPath();
-        this.ctx.rect(x, y, config.PIXEL_SIZE, config.PIXEL_SIZE);
-        // this.ctx.fillStyle = this.day ? this.dayColor : this.nightColor;
+        const t = this.ctx.getTransform();
+        let point = translatePoint({ x, y }, t, true);
+        point = scalePoint({ x: point.x, y: point.y }, t, true);
+        console.log(x, point.x);
+        this.ctx.rect(point.x, point.y, config.PIXEL_SIZE, config.PIXEL_SIZE);
         this.ctx.fillStyle = `${this.colorScale[elevationLevel]}`;
         this.ctx.fill();
         this.ctx.closePath();

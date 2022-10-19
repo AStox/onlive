@@ -2,7 +2,14 @@ import { Board } from "./board";
 import { Map } from "./map";
 import { Player } from "./player";
 import { Interest } from "./interest";
-import { Coords, perlinNoise, pixelCoords, randomInt, randomNoise } from "./utils";
+import {
+  Coords,
+  currentPixelSize,
+  perlinNoise,
+  pixelCoords,
+  randomInt,
+  randomNoise,
+} from "./utils";
 import { Area } from "./area";
 import config from "./config.json";
 
@@ -11,7 +18,13 @@ const TRANSLATTION_AMOUNT = config.TRANSLATTION_AMOUNT;
 const canvas = document.getElementById("myCanvas") as HTMLCanvasElement;
 canvas.setAttribute("width", `${CANVAS_SIZE}`);
 canvas.setAttribute("height", `${CANVAS_SIZE}`);
+const noise = document.getElementById("noise") as HTMLCanvasElement;
+noise.setAttribute("width", `${CANVAS_SIZE}`);
+noise.setAttribute("height", `${CANVAS_SIZE}`);
 // canvas.addEventListener("click", function () {}, false);
+
+let paused = false;
+
 document.addEventListener("keydown", function (event) {
   if (event.key == "=") {
     zoomIn();
@@ -20,20 +33,25 @@ document.addEventListener("keydown", function (event) {
     zoomOut();
   }
   if (event.key === "ArrowUp" || event.key === "w") {
-    translate({ x: 0, y: TRANSLATTION_AMOUNT });
+    translate({ x: 0, y: TRANSLATTION_AMOUNT * config.PIXEL_SIZE });
   }
   if (event.key === "ArrowLeft" || event.key === "a") {
-    translate({ x: TRANSLATTION_AMOUNT, y: 0 });
+    console.log(canvas.getContext("2d").getTransform());
+    translate({ x: TRANSLATTION_AMOUNT * config.PIXEL_SIZE, y: 0 });
   }
   if (event.key === "ArrowDown" || event.key === "s") {
-    translate({ x: 0, y: -TRANSLATTION_AMOUNT });
+    translate({ x: 0, y: -TRANSLATTION_AMOUNT * config.PIXEL_SIZE });
   }
   if (event.key === "ArrowRight" || event.key === "d") {
-    translate({ x: -TRANSLATTION_AMOUNT, y: 0 });
+    translate({ x: -TRANSLATTION_AMOUNT * config.PIXEL_SIZE, y: 0 });
+  }
+  if (event.key === " ") {
+    paused = !paused;
+  } else {
+    console.log(event.key);
   }
 });
 const ctx = canvas.getContext("2d");
-const noise = randomNoise(0, 0, CANVAS_SIZE, CANVAS_SIZE, 100);
 // zoomIn();
 // zoomIn();
 
@@ -47,10 +65,13 @@ map.areas = [area1, area2, area3];
 map.players = players;
 
 function tick() {
-  map.tick();
-  map.players.forEach((player) => player.tick(map));
-  map.areas.forEach((area) => area.tick());
-  // displayGrid();
+  if (!paused) {
+    map.tick();
+    map.players.forEach((player) => player.tick(map));
+    map.areas.forEach((area) => area.tick());
+
+    // displayGrid();
+  }
 }
 setInterval(tick, 200);
 
