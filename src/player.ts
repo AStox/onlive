@@ -2,6 +2,7 @@ import { Interest } from "./interest";
 import { Map, objectType } from "./map";
 import { Coords, dist, normalize, pixelCoords, randomInt } from "./utils";
 import config from "./config.json";
+import p5 from "p5";
 
 type Inventory = {
   resources: { [key: string]: number };
@@ -10,7 +11,7 @@ export class Player {
   MAX_SPEED: number;
   position: Coords;
   color: string;
-  ctx: CanvasRenderingContext2D;
+  s: p5;
   size = config.PIXEL_SIZE;
   // currentDestination: {x: number, y: number}
   currentInterest: Interest | null;
@@ -18,10 +19,10 @@ export class Player {
 
   inventory: Inventory;
 
-  constructor(_position: Coords, _color: string, _ctx: CanvasRenderingContext2D) {
+  constructor(_position: Coords, _color: string, _s: p5) {
     this.position = _position;
     this.color = _color;
-    this.ctx = _ctx;
+    this.s = _s;
     this.MAX_SPEED = 5;
     this.inventory = { resources: {} };
   }
@@ -52,12 +53,15 @@ export class Player {
   }
 
   draw() {
-    this.ctx.beginPath();
+    // this.s.beginPath();
     const coords = { x: this.position.x - this.size / 2, y: this.position.y - this.size / 2 };
-    this.ctx.rect(pixelCoords(coords).x, pixelCoords(coords).y, this.size, this.size);
-    this.ctx.fillStyle = this.color;
-    this.ctx.fill();
-    this.ctx.closePath();
+    this.s.fill(this.s.color(this.color));
+    this.s.noStroke();
+    this.s.rect(coords.x, coords.y, this.size, this.size);
+    // this.s.rect(pixelCoords(coords).x, pixelCoords(coords).y, this.size, this.size);
+    // this.s.fillStyle = this.color;
+    // this.s.fill();
+    // this.s.closePath();
   }
 
   move(interests: Interest[]): Interest {
