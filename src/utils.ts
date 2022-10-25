@@ -1,3 +1,4 @@
+import p5 from "p5";
 import config from "./config.json";
 
 export type Coords = {
@@ -126,4 +127,8 @@ export function currentPixelSize(ctx: CanvasRenderingContext2D) {
   const t = ctx.getTransform();
   const pixelSize = scalePoint({ x: config.PIXEL_SIZE, y: config.PIXEL_SIZE }, t).x;
   return pixelSize;
+}
+
+export function grey(s: p5, num: number) {
+  return s.color(num, num, num);
 }

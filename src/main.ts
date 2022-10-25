@@ -27,29 +27,8 @@ noise.setAttribute("height", `${CANVAS_SIZE}`);
 let paused = false;
 
 document.addEventListener("keydown", function (event) {
-  if (event.key == "=") {
-    zoomIn();
-  }
-  if (event.key == "-") {
-    zoomOut();
-  }
-  if (event.key === "ArrowUp" || event.key === "w") {
-    translate({ x: 0, y: TRANSLATTION_AMOUNT * config.PIXEL_SIZE });
-  }
-  if (event.key === "ArrowLeft" || event.key === "a") {
-    console.log(canvas.getContext("2d").getTransform());
-    translate({ x: TRANSLATTION_AMOUNT * config.PIXEL_SIZE, y: 0 });
-  }
-  if (event.key === "ArrowDown" || event.key === "s") {
-    translate({ x: 0, y: -TRANSLATTION_AMOUNT * config.PIXEL_SIZE });
-  }
-  if (event.key === "ArrowRight" || event.key === "d") {
-    translate({ x: -TRANSLATTION_AMOUNT * config.PIXEL_SIZE, y: 0 });
-  }
   if (event.key === " ") {
     paused = !paused;
-  } else {
-    console.log(event.key);
   }
 });
 
@@ -89,7 +68,7 @@ const sketch = (s: p5) => {
   s.draw = function () {
     if (!paused) {
       s.background(120);
-      s.frameRate(1);
+      s.frameRate(24);
       s.circle(s.random(0, s.width), s.random(0, s.height), 25);
       map.tick();
       map.players.forEach((player) => player.tick(map));
@@ -99,7 +78,6 @@ const sketch = (s: p5) => {
   };
 
   s.keyPressed = function () {
-    console.log(s.keyCode);
     if (s.keyCode === 187) {
       map.zoomIn();
     } else if (s.keyCode === 189) {

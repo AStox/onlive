@@ -4,6 +4,7 @@ import { Player } from "./player";
 import {
   Coords,
   currentPixelSize,
+  grey,
   randomInt,
   randomNoise,
   scalePoint,
@@ -19,7 +20,7 @@ export enum objectType {
 }
 
 export type Tile = {
-  color: number[];
+  color: p5.Color;
   terrain: string;
   altitude: number;
 };
@@ -93,48 +94,15 @@ export class Map {
     for (let i = 0; i < pixelsPerRow; i++) {
       for (let j = 0; j < pixelsPerCol; j++) {
         let color: p5.Color;
-        // console.log(`${this.x + i}-${this.y + j}`);
         if (this.tiles[`${this.x + i}-${this.y + j}`]?.color) {
-          color = this.s.color(
-            this.tiles[`${this.x + i}-${this.y + j}`].color[0],
-            this.tiles[`${this.x + i}-${this.y + j}`].color[1],
-            this.tiles[`${this.x + i}-${this.y + j}`].color[2]
-          );
+          color = this.tiles[`${this.x + i}-${this.y + j}`].color;
         } else {
-          color = this.s.color("red");
+          color = this.s.color("black");
         }
         this.s.fill(color);
         this.s.rect(i * this.pixelSize, j * this.pixelSize, this.pixelSize, this.pixelSize);
       }
     }
-    // this.s.beginPath();
-    // this.s.rect(this.x * 10, this.y * 10, this.width * 10, this.height * 10);
-    // this.s.fillStyle = "black";
-    // this.s.fill();
-    // this.s.closePath();
-    // perlinNoise(this.s, this.noise, 0, 0, this.width, this.height, 1, 10);
-    // const elevationCount = this.colorScale.length;
-    // const pixelSize =
-    // const pixelCount = config.CANVAS_SIZE / pixelSize;
-    // // x coord
-    // for (let i = 0; i < pixelCount; i++) {
-    //   // y coord
-    //   for (let j = 0; j < pixelCount; j++) {
-    //     const x = i * pixelSize;
-    //     const y = j * pixelSize;
-    //     const p = this.s.getImageData(x + pixelSize / 2, y + pixelSize / 2, 1, 1).data;
-    //     const elevationLevel = Math.floor((p[0] / 255) * elevationCount);
-    //     this.s.beginPath();
-    //     const t = this.s.getTransform();
-    //     let point = translatePoint({ x, y }, t, true);
-    //     point = scalePoint({ x: point.x, y: point.y }, t, true);
-    //     console.log(x, point.x);
-    //     this.s.rect(point.x, point.y, config.PIXEL_SIZE, config.PIXEL_SIZE);
-    //     this.s.fillStyle = `${this.colorScale[elevationLevel]}`;
-    //     this.s.fill();
-    //     this.s.closePath();
-    //   }
-    // }
   }
 
   passageOfTime() {
@@ -148,42 +116,78 @@ export class Map {
   }
 
   generate() {
+    const grassColorStart = getComputedStyle(document.documentElement).getPropertyValue(
+      "--green-dark"
+    );
+    const grassColorEnd = getComputedStyle(document.documentElement).getPropertyValue("--grass1");
+    const waterColorStart = getComputedStyle(document.documentElement).getPropertyValue(
+      "--blue-med"
+    );
+    const waterColorEnd = getComputedStyle(document.documentElement).getPropertyValue(
+      "--blue-light"
+    );
+    const mountainColorStart = getComputedStyle(document.documentElement).getPropertyValue(
+      "--grey-dark"
+    );
+    const mountainColorEnd = getComputedStyle(document.documentElement).getPropertyValue(
+      "--grey-light"
+    );
+    const colorLevels = 25;
     // x coord
     for (let i = 0; i < this.width; i += 1) {
       // y coord
       for (let j = 0; j < this.height; j += 1) {
-        // console.log(`${i}-${j}`);
-        // console.log(this.width / this.pixelSize);
-        // console.log(this.width);
-        // this.tiles[`${i / this.pixelSize}-${j / this.pixelSize}`] = {
+        const noise = Math.floor(this.perlinNoise(i, j)[0] * colorLevels) / colorLevels;
+        let color: p5.Color;
+        if (noise > 0.7) {
+          color = this.s.lerpColor(
+            this.s.color(mountainColorStart),
+            this.s.color(mountainColorEnd),
+            noise
+          );
+        } else if (noise > 0.4) {
+          color = this.s.lerpColor(
+            this.s.color(grassColorStart),
+            this.s.color(grassColorEnd),
+            noise
+          );
+        } else {
+          color = this.s.lerpColor(
+            this.s.color(waterColorStart),
+            this.s.color(waterColorEnd),
+            noise
+          );
+        }
+
         this.tiles[`${i - this.width / 2}-${j - this.height / 2}`] = {
-          color: this.perlinNoise(i, j),
+          color,
           terrain: "grass",
           altitude: 0,
         };
-        // console.log(this.tiles[`${i}-${j}`]);
       }
     }
   }
 
   perlinNoise(x: number, y: number): number[] {
-    let color = [0, 0, 0];
+    // let color = [0, 0, 0];
+    let color = 0;
     const levels = 4;
     const scale = 0.05;
 
+    color += (this.s?.noise((x * scale) / 8, (y * scale) / 8) * 2) / (levels + 1);
     for (let i = 0; i < levels; i++) {
-      for (let j = 0; j < 3; j++) {
-        color[j] += this.s?.noise((x * scale) / (i + 1), (y * scale) / (i + 1)) * (255 / levels);
+      color += this.s?.noise((x * scale) / (i + 2), (y * scale) / (i + 2)) / (levels + 1);
+      if (x === 0 && y === 0) {
+        console.log("!!", color);
       }
+      color = Math.min(1, color);
     }
-    // console.log(x, y, color);
-    return color;
+    return [color, color, color];
   }
 
   zoomIn() {
     const pixelsPerRow = this.s.width / this.pixelSize;
     const pixelsPerCol = this.s.height / this.pixelSize;
-    console.log(pixelsPerCol);
     this.translate({ x: pixelsPerRow / 4, y: pixelsPerCol / 4 });
     this.pixelSize *= 2;
     // this.translate({ x: pixelsPerRow, y: pixelsPerCol });
@@ -192,12 +196,9 @@ export class Map {
   zoomOut() {
     const pixelsPerRow = this.s.width / this.pixelSize;
     const pixelsPerCol = this.s.height / this.pixelSize;
-    if ((2 * this.s.width) / this.pixelSize <= this.width / 4) {
-      console.log(pixelsPerCol);
+    if ((2 * this.s.width) / this.pixelSize <= this.width / 2) {
       this.translate({ x: -pixelsPerRow / 2, y: -pixelsPerCol / 2 });
       this.pixelSize /= 2;
-    } else {
-      console.log("max zoom");
     }
   }
 
