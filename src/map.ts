@@ -80,7 +80,6 @@ export class Map {
   tick() {
     this.draw();
     this.passageOfTime();
-    // console.log(this.day ? "daytime" : "nightime", this.time);
   }
 
   draw() {
@@ -94,11 +93,12 @@ export class Map {
     for (let i = 0; i < pixelsPerRow; i++) {
       for (let j = 0; j < pixelsPerCol; j++) {
         let color: p5.Color;
-        if (this.tiles[`${i}-${j}`]?.color) {
+        // console.log(`${this.x + i}-${this.y + j}`);
+        if (this.tiles[`${this.x + i}-${this.y + j}`]?.color) {
           color = this.s.color(
-            this.tiles[`${i}-${j}`].color[0],
-            this.tiles[`${i}-${j}`].color[1],
-            this.tiles[`${i}-${j}`].color[2]
+            this.tiles[`${this.x + i}-${this.y + j}`].color[0],
+            this.tiles[`${this.x + i}-${this.y + j}`].color[1],
+            this.tiles[`${this.x + i}-${this.y + j}`].color[2]
           );
         } else {
           color = this.s.color("red");
@@ -155,7 +155,8 @@ export class Map {
         // console.log(`${i}-${j}`);
         // console.log(this.width / this.pixelSize);
         // console.log(this.width);
-        this.tiles[`${i / this.pixelSize}-${j / this.pixelSize}`] = {
+        // this.tiles[`${i / this.pixelSize}-${j / this.pixelSize}`] = {
+        this.tiles[`${i - this.width / 2}-${j - this.height / 2}`] = {
           color: this.perlinNoise(i, j),
           terrain: "grass",
           altitude: 0,
@@ -168,7 +169,7 @@ export class Map {
   perlinNoise(x: number, y: number): number[] {
     let color = [0, 0, 0];
     const levels = 4;
-    const scale = 0.003;
+    const scale = 0.05;
 
     for (let i = 0; i < levels; i++) {
       for (let j = 0; j < 3; j++) {
@@ -177,6 +178,32 @@ export class Map {
     }
     // console.log(x, y, color);
     return color;
+  }
+
+  zoomIn() {
+    const pixelsPerRow = this.s.width / this.pixelSize;
+    const pixelsPerCol = this.s.height / this.pixelSize;
+    console.log(pixelsPerCol);
+    this.translate({ x: pixelsPerRow / 4, y: pixelsPerCol / 4 });
+    this.pixelSize *= 2;
+    // this.translate({ x: pixelsPerRow, y: pixelsPerCol });
+  }
+
+  zoomOut() {
+    const pixelsPerRow = this.s.width / this.pixelSize;
+    const pixelsPerCol = this.s.height / this.pixelSize;
+    if ((2 * this.s.width) / this.pixelSize <= this.width / 4) {
+      console.log(pixelsPerCol);
+      this.translate({ x: -pixelsPerRow / 2, y: -pixelsPerCol / 2 });
+      this.pixelSize /= 2;
+    } else {
+      console.log("max zoom");
+    }
+  }
+
+  translate(coords: Coords) {
+    this.x += coords.x;
+    this.y += coords.y;
   }
 
   static remove(object: Interest) {

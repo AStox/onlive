@@ -72,10 +72,11 @@ const ctx = canvas.getContext("2d");
 
 const sketch = (s: p5) => {
   let map: Map;
+
   s.setup = function () {
     s.createCanvas(1000, 1000);
     const mapSize = config.MAP_SIZE;
-    map = new Map(-mapSize / 2, -mapSize / 2, mapSize, mapSize, "#2B2118", "black", s);
+    map = new Map(0, 0, mapSize, mapSize, "#2B2118", "black", s);
     const player: Player = new Player({ x: s.width / 2, y: s.height / 2 }, "#F7F3E3", s);
     const players = [player];
     // const area1 = Area.randomArea(0, s.width, 0, s.height, 50, s.height, s);
@@ -95,6 +96,24 @@ const sketch = (s: p5) => {
       // map.areas.forEach((area) => area.tick());
       // displayGrid();
     }
+  };
+
+  s.keyPressed = function () {
+    console.log(s.keyCode);
+    if (s.keyCode === 187) {
+      map.zoomIn();
+    } else if (s.keyCode === 189) {
+      map.zoomOut();
+    } else if (s.keyCode === s.UP_ARROW) {
+      map.translate({ x: 0, y: -1 * config.TRANSLATTION_AMOUNT });
+    } else if (s.keyCode === s.DOWN_ARROW) {
+      map.translate({ x: 0, y: 1 * config.TRANSLATTION_AMOUNT });
+    } else if (s.keyCode === s.LEFT_ARROW) {
+      map.translate({ x: -1 * config.TRANSLATTION_AMOUNT, y: 0 });
+    } else if (s.keyCode === s.RIGHT_ARROW) {
+      map.translate({ x: 1 * config.TRANSLATTION_AMOUNT, y: 0 });
+    }
+    map.draw();
   };
 
   function tick() {
