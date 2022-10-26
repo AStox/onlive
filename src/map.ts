@@ -13,17 +13,18 @@ import {
 } from "./utils";
 import config from "./config.json";
 import p5 from "p5";
+import { Tile } from "./tile";
 
 export enum objectType {
   player = "PLAYER",
   interest = "INTEREST",
 }
 
-export type Tile = {
-  color: p5.Color;
-  terrain: string;
-  altitude: number;
-};
+// export type Tile = {
+//   color: p5.Color;
+//   terrain: string;
+//   altitude: number;
+// };
 export class Map {
   x: number;
   y: number;
@@ -41,7 +42,6 @@ export class Map {
   // coords: { [key: string]: Tile };
   pixelSize: number;
   tiles: { [key: string]: Tile };
-  colorScale: string[];
   translation: Coords = { x: 0, y: 0 };
 
   constructor(
@@ -66,17 +66,17 @@ export class Map {
     this.noise = randomNoise(0, 0, this.width, this.height, 100);
     this.tiles = {} as { [key: string]: Tile };
     this.pixelSize = config.PIXEL_SIZE;
-    this.colorScale = [
-      // getComputedStyle(document.documentElement).getPropertyValue("--blue-dark"),
-      getComputedStyle(document.documentElement).getPropertyValue("--blue-med"),
-      getComputedStyle(document.documentElement).getPropertyValue("--blue-light"),
-      getComputedStyle(document.documentElement).getPropertyValue("--grass5"),
-      getComputedStyle(document.documentElement).getPropertyValue("--grass4"),
-      getComputedStyle(document.documentElement).getPropertyValue("--grass3"),
-      getComputedStyle(document.documentElement).getPropertyValue("--grass2"),
-      getComputedStyle(document.documentElement).getPropertyValue("--grass1"),
-    ];
+
+    const player: Player = new Player(this.s, "#F7F3E3", this);
+    const players = [player];
+    this.players = players;
+
     this.generate();
+
+    // set up player
+    const tile = this.tiles[`0-0`];
+    tile.contents.push(player);
+    player.tile = tile;
   }
 
   tick() {
@@ -87,7 +87,6 @@ export class Map {
   draw() {
     this.x += this.translation.x;
     this.y += this.translation.y;
-    // this.translation = { x: 0, y: 0 };
 
     this.s.fill(
       this.s.color(getComputedStyle(document.documentElement).getPropertyValue("--grass5"))
@@ -98,14 +97,19 @@ export class Map {
     const pixelsPerCol = this.s.height / this.pixelSize;
     for (let i = 0; i < pixelsPerRow; i++) {
       for (let j = 0; j < pixelsPerCol; j++) {
-        let color: p5.Color;
-        if (this.tiles[`${this.x + i}-${this.y + j}`]?.color) {
-          color = this.tiles[`${this.x + i}-${this.y + j}`].color;
-        } else {
-          color = this.s.color("black");
-        }
-        this.s.fill(color);
-        this.s.rect(i * this.pixelSize, j * this.pixelSize, this.pixelSize, this.pixelSize);
+        this.tiles[`${this.x + i}-${this.y + j}`]?.draw({
+          x: i,
+          y: j,
+        });
+        // console.log(`${this.x + i}-${this.y + j}`);
+        // let color: p5.Color;
+        // if (this.tiles[`${this.x + i}-${this.y + j}`]?.color) {
+        //   color = this.tiles[`${this.x + i}-${this.y + j}`].color;
+        // } else {
+        //   color = this.s.color("black");
+        // }
+        // this.s.fill(color);
+        // this.s.rect(i * this.pixelSize, j * this.pixelSize, this.pixelSize, this.pixelSize);
       }
     }
   }
@@ -163,12 +167,21 @@ export class Map {
             noise
           );
         }
-
-        this.tiles[`${i - this.width / 2}-${j - this.height / 2}`] = {
+        // this.tiles[`${i - this.width / 2}-${j - this.height / 2}`] = {
+        //   color,
+        //   terrain: "grass",
+        //   altitude: 0,
+        // };
+        const x = i - this.width / 2;
+        const y = j - this.height / 2;
+        this.tiles[`${i - this.width / 2}-${j - this.height / 2}`] = new Tile(
+          this.s,
+          this,
+          { x, y },
           color,
-          terrain: "grass",
-          altitude: 0,
-        };
+          "grass",
+          0
+        );
       }
     }
   }
@@ -190,17 +203,18 @@ export class Map {
   zoomIn() {
     const pixelsPerRow = this.s.width / this.pixelSize;
     const pixelsPerCol = this.s.height / this.pixelSize;
-    this.translate({ x: pixelsPerRow / 4, y: pixelsPerCol / 4 });
+    this.x += pixelsPerRow / 4;
+    this.y += pixelsPerCol / 4;
     this.pixelSize *= 2;
     console.log(this.pixelSize * this.pixelSize);
-    // this.translate({ x: pixelsPerRow, y: pixelsPerCol });
   }
 
   zoomOut() {
     const pixelsPerRow = this.s.width / this.pixelSize;
     const pixelsPerCol = this.s.height / this.pixelSize;
     if ((2 * this.s.width) / this.pixelSize <= this.width / 2) {
-      this.translate({ x: -pixelsPerRow / 2, y: -pixelsPerCol / 2 });
+      this.x += -pixelsPerRow / 2;
+      this.y += -pixelsPerCol / 2;
       this.pixelSize /= 2;
     }
   }

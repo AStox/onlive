@@ -3,26 +3,28 @@ import { Map, objectType } from "./map";
 import { Coords, dist, normalize, pixelCoords, randomInt } from "./utils";
 import config from "./config.json";
 import p5 from "p5";
+import { Tile } from "./tile";
 
 type Inventory = {
   resources: { [key: string]: number };
 };
 export class Player {
   MAX_SPEED: number;
-  position: Coords;
+  tile: Tile;
   color: string;
   s: p5;
   size = config.PIXEL_SIZE;
   // currentDestination: {x: number, y: number}
   currentInterest: Interest | null;
   working: boolean;
-
+  map: Map;
   inventory: Inventory;
 
-  constructor(_position: Coords, _color: string, _s: p5) {
-    this.position = _position;
+  constructor(_s: p5, _color: string, _map: Map) {
+    // this.position = _position;
     this.color = _color;
     this.s = _s;
+    this.map = _map;
     this.MAX_SPEED = 5;
     this.inventory = { resources: {} };
   }
@@ -35,7 +37,7 @@ export class Player {
     // TODO: change this so that map.interests in an array of all interests within the 9 gridcell square of influence. currently this will include interests within areas that center in the SoI but expand beyond it.
     map.areas.forEach((area) => (interests = interests.concat(area.interests)));
     interests.forEach((interest) => {
-      if (dist(this.position, interest.position) <= config.WORK_DIST_THRESHOLD + interest.size) {
+      if (dist(this.tile.coords, interest.position) <= config.WORK_DIST_THRESHOLD + interest.size) {
         this.currentInterest = interest;
       }
     });
@@ -54,11 +56,14 @@ export class Player {
 
   draw() {
     // this.s.beginPath();
-    const coords = { x: this.position.x - this.size / 2, y: this.position.y - this.size / 2 };
+    const coords = {
+      x: this.tile.coords.x - this.map.pixelSize / 2,
+      y: this.tile.coords.y - this.map.pixelSize / 2,
+    };
     this.s.fill(this.s.color(this.color));
     this.s.noStroke();
-    this.s.rect(coords.x, coords.y, this.size, this.size);
-    // this.s.rect(pixelCoords(coords).x, pixelCoords(coords).y, this.size, this.size);
+    this.s.rect(coords.x, coords.y, this.map.pixelSize, this.map.pixelSize);
+    // this.s.rect(pixelCoords(coords).x, pixelCoords(coords).y, this.map.pixelSize, this.map.pixelSize);
     // this.s.fillStyle = this.color;
     // this.s.fill();
     // this.s.closePath();
@@ -76,11 +81,17 @@ export class Player {
 
       // move player based on interest locations
       const x =
-        (190 / dist(this.position, interest.position) ** 2) *
-        normalize(interest.position.x - this.position.x, interest.position.y - this.position.y).x;
+        (190 / dist(this.tile.coords, interest.position) ** 2) *
+        normalize(
+          interest.position.x - this.tile.coords.x,
+          interest.position.y - this.tile.coords.y
+        ).x;
       const y =
-        (190 / dist(this.position, interest.position) ** 2) *
-        normalize(interest.position.x - this.position.x, interest.position.y - this.position.y).y;
+        (190 / dist(this.tile.coords, interest.position) ** 2) *
+        normalize(
+          interest.position.x - this.tile.coords.x,
+          interest.position.y - this.tile.coords.y
+        ).y;
       const length = dist({ x: 0, y: 0 }, { x, y });
       if (length > greatestPull) {
         greatestPull = length;
@@ -91,8 +102,8 @@ export class Player {
       newY += y;
     });
     const finalMove = normalize(newX, newY);
-    this.position.x += finalMove.x * this.MAX_SPEED;
-    this.position.y += finalMove.y * this.MAX_SPEED;
+    this.tile.coords.x += finalMove.x * this.MAX_SPEED;
+    this.tile.coords.y += finalMove.y * this.MAX_SPEED;
     return greatestInterest;
   }
 

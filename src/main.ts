@@ -56,13 +56,10 @@ const sketch = (s: p5) => {
     s.createCanvas(1000, 1000);
     const mapSize = config.MAP_SIZE;
     map = new Map(0, 0, mapSize, mapSize, "#2B2118", "black", s);
-    const player: Player = new Player({ x: s.width / 2, y: s.height / 2 }, "#F7F3E3", s);
-    const players = [player];
     // const area1 = Area.randomArea(0, s.width, 0, s.height, 50, s.height, s);
     // const area2 = Area.randomArea(0, s.width, 0, s.height, 50, s.height, s);
     // const area3 = Area.randomArea(0, s.width, 0, s.height, 50, s.height, s);
     // map.areas = [area1, area2, area3];
-    map.players = players;
   };
 
   s.draw = function () {
