@@ -42,6 +42,7 @@ export class Map {
   pixelSize: number;
   tiles: { [key: string]: Tile };
   colorScale: string[];
+  translation: Coords = { x: 0, y: 0 };
 
   constructor(
     _x: number,
@@ -84,6 +85,10 @@ export class Map {
   }
 
   draw() {
+    this.x += this.translation.x;
+    this.y += this.translation.y;
+    // this.translation = { x: 0, y: 0 };
+
     this.s.fill(
       this.s.color(getComputedStyle(document.documentElement).getPropertyValue("--grass5"))
     );
@@ -177,9 +182,6 @@ export class Map {
     color += (this.s?.noise((x * scale) / 8, (y * scale) / 8) * 2) / (levels + 1);
     for (let i = 0; i < levels; i++) {
       color += this.s?.noise((x * scale) / (i + 2), (y * scale) / (i + 2)) / (levels + 1);
-      if (x === 0 && y === 0) {
-        console.log("!!", color);
-      }
       color = Math.min(1, color);
     }
     return [color, color, color];
@@ -190,6 +192,7 @@ export class Map {
     const pixelsPerCol = this.s.height / this.pixelSize;
     this.translate({ x: pixelsPerRow / 4, y: pixelsPerCol / 4 });
     this.pixelSize *= 2;
+    console.log(this.pixelSize * this.pixelSize);
     // this.translate({ x: pixelsPerRow, y: pixelsPerCol });
   }
 
@@ -203,8 +206,7 @@ export class Map {
   }
 
   translate(coords: Coords) {
-    this.x += coords.x;
-    this.y += coords.y;
+    this.translation = coords;
   }
 
   static remove(object: Interest) {
