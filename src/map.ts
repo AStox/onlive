@@ -206,7 +206,6 @@ export class Map {
     this.x += pixelsPerRow / 4;
     this.y += pixelsPerCol / 4;
     this.pixelSize *= 2;
-    console.log(this.pixelSize * this.pixelSize);
   }
 
   zoomOut() {

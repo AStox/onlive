@@ -51,14 +51,15 @@ export class Player {
       this.work(this.currentInterest, map);
     }
 
-    this.draw();
+    // this.draw();
   }
 
   draw() {
     // this.s.beginPath();
+    console.log("---" + this.tile.viewCoords.x);
     const coords = {
-      x: this.tile.coords.x - this.map.pixelSize / 2,
-      y: this.tile.coords.y - this.map.pixelSize / 2,
+      x: this.tile.viewCoords.x * this.map.pixelSize,
+      y: this.tile.viewCoords.y * this.map.pixelSize,
     };
     this.s.fill(this.s.color(this.color));
     this.s.noStroke();

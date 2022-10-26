@@ -10,6 +10,7 @@ export class Tile {
   terrain: string;
   elevation: number;
   contents: any[];
+  viewCoords: Coords;
 
   constructor(
     _s: p5,
@@ -31,6 +32,7 @@ export class Tile {
   tick() {}
 
   draw(viewCoords: Coords) {
+    this.viewCoords = viewCoords;
     this.s.fill(this.color);
     this.s.rect(
       viewCoords.x * this.map.pixelSize,
@@ -39,14 +41,15 @@ export class Tile {
       this.map.pixelSize
     );
     this.contents.forEach((contents) => {
-      console.log("sdf");
-      this.s.fill(contents.color);
-      this.s.rect(
-        viewCoords.x * this.map.pixelSize,
-        viewCoords.y * this.map.pixelSize,
-        this.map.pixelSize,
-        this.map.pixelSize
-      );
+      console.log(this.viewCoords);
+      contents.draw();
+      //   this.s.fill(contents.color);
+      //   this.s.rect(
+      //     viewCoords.x * this.map.pixelSize,
+      //     viewCoords.y * this.map.pixelSize,
+      //     this.map.pixelSize,
+      //     this.map.pixelSize
+      //   );
     });
   }
 }
