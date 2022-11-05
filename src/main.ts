@@ -66,7 +66,6 @@ const sketch = (s: p5) => {
     if (!paused) {
       s.background(120);
       s.frameRate(24);
-      s.circle(s.random(0, s.width), s.random(0, s.height), 25);
       map.tick();
       map.players.forEach((player) => player.tick(map));
       // map.areas.forEach((area) => area.tick());
@@ -92,7 +91,14 @@ const sketch = (s: p5) => {
       translation.x += -1 * translationAmount;
     } else if (s.keyCode === s.RIGHT_ARROW) {
       translation.x += 1 * translationAmount;
+    } else if (s.keyCode === s.SHIFT) {
+      map.switch();
+    } else if (s.keyCode === 83) {
+      map.switch();
+    } else if (s.keyCode === 65) {
+      map.toggleFlowMap();
     }
+    console.log("keycode: ", s.keyCode);
     map.translate(translation);
     map.draw();
   };

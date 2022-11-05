@@ -14,6 +14,7 @@ import {
 import config from "./config.json";
 import p5 from "p5";
 import { Tile } from "./tile";
+import { Erosion } from "./erosion";
 
 export enum objectType {
   player = "PLAYER",
@@ -43,6 +44,14 @@ export class Map {
   pixelSize: number;
   tiles: { [key: string]: Tile };
   translation: Coords = { x: 0, y: 0 };
+  noiseMap: { [key: string]: number };
+  mapArrays: { [key: string]: number }[] = [];
+  mapArrayIndex = 0;
+  flowCount = config.EROSION_SIM_COUNT_MOD * config.MAP_SIZE;
+  // currentArray: number[];
+
+  showFlow: boolean;
+  flowMap: { x: number; y: number; sediment: number; color: number }[][];
 
   constructor(
     _x: number,
@@ -66,12 +75,13 @@ export class Map {
     this.noise = randomNoise(0, 0, this.width, this.height, 100);
     this.tiles = {} as { [key: string]: Tile };
     this.pixelSize = config.PIXEL_SIZE;
+    this.showFlow = false;
 
     const player: Player = new Player(this.s, "#F7F3E3", this);
     const players = [player];
     this.players = players;
 
-    this.generate();
+    this.generate(true);
 
     // set up player
     const tile = this.tiles[`0-0`];
@@ -93,23 +103,57 @@ export class Map {
     );
     this.s.noStroke();
     this.s.rect(0, 0, this.s.width, this.s.height);
-    const pixelsPerRow = this.s.width / this.pixelSize;
-    const pixelsPerCol = this.s.height / this.pixelSize;
-    for (let i = 0; i < pixelsPerRow; i++) {
-      for (let j = 0; j < pixelsPerCol; j++) {
-        this.tiles[`${this.x + i}-${this.y + j}`]?.draw({
-          x: i,
-          y: j,
+    const pixelsPerScreenRow = this.s.width / this.pixelSize;
+    const pixelsPerScreenCol = this.s.height / this.pixelSize;
+    for (let y = 0; y < pixelsPerScreenRow; y++) {
+      for (let x = 0; x < pixelsPerScreenCol; x++) {
+        this.tiles[`${this.x + x}-${this.y + y}`]?.draw({
+          x,
+          y,
         });
-        // console.log(`${this.x + i}-${this.y + j}`);
-        // let color: p5.Color;
-        // if (this.tiles[`${this.x + i}-${this.y + j}`]?.color) {
-        //   color = this.tiles[`${this.x + i}-${this.y + j}`].color;
-        // } else {
-        //   color = this.s.color("black");
-        // }
-        // this.s.fill(color);
-        // this.s.rect(i * this.pixelSize, j * this.pixelSize, this.pixelSize, this.pixelSize);
+      }
+    }
+
+    // EROSION FLOW MAP DRAW CALLS
+    if (this.showFlow) {
+      for (let i = 0; i < this.flowMap.length; i++) {
+        for (let j = 0; j < this.flowMap[i].length; j++) {
+          const flow = this.flowMap[i][j];
+          if (
+            flow.x > this.x &&
+            flow.x < this.x + this.s.width / this.pixelSize &&
+            flow.y > this.y &&
+            flow.y < this.y + this.s.height / this.pixelSize
+          ) {
+            const color =
+              // j === 0
+              // ? this.s.color("green")
+              // : this.s.color(flow.color * 255, flow.color * 255, flow.color * 255);
+              this.s.color("red");
+            this.s.fill(color);
+            this.s.circle(
+              (flow.x - this.x) * this.pixelSize,
+              (flow.y - this.y) * this.pixelSize,
+              flow.sediment * 100
+            );
+            this.s.fill(this.s.color("red"));
+            // this.s.circle(
+            //   (flow.x - this.x - 1) * this.pixelSize,
+            //   (flow.y - this.y) * this.pixelSize,
+            //   2
+            // );
+            // this.s.circle(
+            //   (flow.x - this.x - 1) * this.pixelSize,
+            //   (flow.y - this.y - 1) * this.pixelSize,
+            //   2
+            // );
+            // this.s.circle(
+            //   (flow.x - this.x) * this.pixelSize,
+            //   (flow.y - this.y - 1) * this.pixelSize,
+            //   2
+            // );
+          }
+        }
       }
     }
   }
@@ -124,7 +168,7 @@ export class Map {
     }
   }
 
-  generate() {
+  generate(reload = false) {
     const grassColorStart = getComputedStyle(document.documentElement).getPropertyValue(
       "--green-dark"
     );
@@ -141,13 +185,51 @@ export class Map {
     const mountainColorEnd = getComputedStyle(document.documentElement).getPropertyValue(
       "--grey-light"
     );
-    const colorLevels = 25;
-    // x coord
-    for (let i = 0; i < this.width; i += 1) {
-      // y coord
-      for (let j = 0; j < this.height; j += 1) {
-        const noise = Math.floor(this.perlinNoise(i, j)[0] * colorLevels) / colorLevels;
+    const colorLevels = config.MAP_COLOUR_LEVELS;
+    if (reload) {
+      this.noiseMap = {};
+      const random1 = randomInt(this.width / 2, this.width);
+      const random2 = randomInt(this.width / 2, this.width);
+      for (let y = 0; y < this.width; y += 1) {
+        for (let x = 0; x < this.height; x += 1) {
+          this.noiseMap[`${x}-${y}`] = this.perlinNoise(
+            x * this.pixelSize,
+            y * this.pixelSize,
+            random1,
+            random2
+          )[0];
+          // if (i >= 555 && i <= 560 && j >= 555 && j <= 560) {
+          //   this.noiseMap[this.noiseMap.length - 1] = 0;
+          // }
+        }
+      }
+
+      const e = new Erosion(this.s, this.width);
+      // this.mapArrays.push(e.test(this.noiseMap));
+      this.mapArrays.push(structuredClone(this.noiseMap));
+      const erosion = e.erode(this.noiseMap, this.flowCount);
+      // const erosion = e.erode(this.noiseMap, 1);
+      this.mapArrays.push(erosion.map);
+      // const obj: { [key: string]: number } = {};
+      // Object.keys(this.noiseMap).map((key) => {
+      //   obj[key] = 0;
+      // });
+      // this.mapArrays.push(obj);
+
+      // this.noiseMap = erosion.map;
+      this.flowMap = erosion.flowMap;
+
+      // this.noiseMap = this.noiseMap.map((thing) => 1);
+    }
+
+    for (let y = 0; y < this.width; y++) {
+      for (let x = 0; x < this.height; x++) {
+        const noise =
+          Math.floor(this.mapArrays[this.mapArrayIndex][`${x}-${y}`] * colorLevels) / colorLevels;
+        // const noise = this.mapArrays[this.mapArrayIndex][`${x}-${y}`];
+
         let color: p5.Color;
+        color = this.s.color(noise * 255, noise * 255, noise * 255);
         if (noise > 0.7) {
           color = this.s.lerpColor(
             this.s.color(mountainColorStart),
@@ -172,29 +254,23 @@ export class Map {
         //   terrain: "grass",
         //   altitude: 0,
         // };
-        const x = i - this.width / 2;
-        const y = j - this.height / 2;
-        this.tiles[`${i - this.width / 2}-${j - this.height / 2}`] = new Tile(
-          this.s,
-          this,
-          { x, y },
-          color,
-          "grass",
-          0
-        );
+        this.tiles[`${x}-${y}`] = new Tile(this.s, this, { x, y }, color, "grass", 0);
       }
     }
   }
 
-  perlinNoise(x: number, y: number): number[] {
+  perlinNoise(x: number, y: number, random1: number, random2: number): number[] {
     // let color = [0, 0, 0];
     let color = 0;
     const levels = 4;
-    const scale = 0.05;
+    const scale = 0.005;
 
-    color += (this.s?.noise((x * scale) / 8, (y * scale) / 8) * 2) / (levels + 1);
+    color +=
+      (this.s?.noise(((x + random1) * scale) / 8, ((y + random1) * scale) / 8) * 2) / (levels + 1);
     for (let i = 0; i < levels; i++) {
-      color += this.s?.noise((x * scale) / (i + 2), (y * scale) / (i + 2)) / (levels + 1);
+      color +=
+        this.s?.noise(((x + random2) * scale) / (i + 2), ((y + random2) * scale) / (i + 2)) /
+        (levels + 1);
       color = Math.min(1, color);
     }
     return [color, color, color];
@@ -220,6 +296,18 @@ export class Map {
 
   translate(coords: Coords) {
     this.translation = coords;
+  }
+
+  switch() {
+    this.mapArrayIndex += 1;
+    if (this.mapArrayIndex === this.mapArrays.length) {
+      this.mapArrayIndex = 0;
+    }
+    this.generate();
+  }
+
+  toggleFlowMap() {
+    this.showFlow = !this.showFlow;
   }
 
   static remove(object: Interest) {
