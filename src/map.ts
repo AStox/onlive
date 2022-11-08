@@ -14,7 +14,7 @@ import {
 import config from "./config.json";
 import p5 from "p5";
 import { Tile } from "./tile";
-import { Erosion } from "./erosion";
+import { Erosion, FlowMap } from "./erosion";
 
 export enum objectType {
   player = "PLAYER",
@@ -47,11 +47,14 @@ export class Map {
   noiseMap: { [key: string]: number };
   mapArrays: { [key: string]: number }[] = [];
   mapArrayIndex = 0;
-  flowCount = config.EROSION_SIM_COUNT_MOD * config.MAP_SIZE;
+  flowCount =
+    config.EROSION_SIM_COUNT > 0
+      ? config.EROSION_SIM_COUNT
+      : config.EROSION_SIM_COUNT_MOD * config.MAP_SIZE;
   // currentArray: number[];
 
   showFlow: boolean;
-  flowMap: { x: number; y: number; sediment: number; color: number }[][];
+  flowMap: FlowMap[][];
 
   constructor(
     _x: number,
@@ -98,6 +101,11 @@ export class Map {
     this.x += this.translation.x;
     this.y += this.translation.y;
 
+    const erodeColor = getComputedStyle(document.documentElement).getPropertyValue("--red-med");
+    const depositColor = getComputedStyle(document.documentElement).getPropertyValue(
+      "--yellow-green-dark"
+    );
+
     this.s.fill(
       this.s.color(getComputedStyle(document.documentElement).getPropertyValue("--grass5"))
     );
@@ -116,7 +124,8 @@ export class Map {
 
     // EROSION FLOW MAP DRAW CALLS
     if (this.showFlow) {
-      for (let i = 0; i < this.flowMap.length; i++) {
+      const increment = this.flowMap.length > 100 ? 50 : 1;
+      for (let i = 0; i < this.flowMap.length; i += increment) {
         for (let j = 0; j < this.flowMap[i].length; j++) {
           const flow = this.flowMap[i][j];
           if (
@@ -130,13 +139,13 @@ export class Map {
               // ? this.s.color("green")
               // : this.s.color(flow.color * 255, flow.color * 255, flow.color * 255);
               this.s.color("red");
-            this.s.fill(color);
+            this.s.fill(flow.depositing ? depositColor : erodeColor);
             this.s.circle(
               (flow.x - this.x) * this.pixelSize,
               (flow.y - this.y) * this.pixelSize,
-              flow.sediment * 100
+              flow.sediment * 300
             );
-            this.s.fill(this.s.color("red"));
+            this.s.fill(flow.depositing ? depositColor : erodeColor);
             // this.s.circle(
             //   (flow.x - this.x - 1) * this.pixelSize,
             //   (flow.y - this.y) * this.pixelSize,
@@ -174,7 +183,7 @@ export class Map {
     );
     const grassColorEnd = getComputedStyle(document.documentElement).getPropertyValue("--grass1");
     const waterColorStart = getComputedStyle(document.documentElement).getPropertyValue(
-      "--blue-med"
+      "--blue-dark"
     );
     const waterColorEnd = getComputedStyle(document.documentElement).getPropertyValue(
       "--blue-light"
@@ -192,15 +201,25 @@ export class Map {
       const random2 = randomInt(this.width / 2, this.width);
       for (let y = 0; y < this.width; y += 1) {
         for (let x = 0; x < this.height; x += 1) {
-          this.noiseMap[`${x}-${y}`] = this.perlinNoise(
-            x * this.pixelSize,
-            y * this.pixelSize,
-            random1,
-            random2
-          )[0];
-          // if (i >= 555 && i <= 560 && j >= 555 && j <= 560) {
-          //   this.noiseMap[this.noiseMap.length - 1] = 0;
-          // }
+          const radius = config.MAP_SIZE / 2;
+          const power = 2;
+          const fallOff = 0.4;
+          const noiseMod = (x: number, y: number, fallOff: number, power: number) => {
+            const xFallOff = x > radius ? -fallOff : fallOff;
+            const yFallOff = y > radius ? -fallOff : fallOff;
+            const dist = Math.pow(
+              Math.pow(x - radius, power) + Math.pow(y - radius, power),
+              //       75 - 50 - 25
+              //       25 - 50 + 25
+              //       10 - 50
+              1 / power
+            );
+            return dist > fallOff * radius ? 1 - (dist - fallOff * radius) / (radius * 1) : 1;
+          };
+          const noise =
+            this.perlinNoise(x * config.NOISE_SIZE, y * config.NOISE_SIZE, random1, random2)[0] *
+            noiseMod(x, y, fallOff, power);
+          this.noiseMap[`${x}-${y}`] = noise;
         }
       }
 
@@ -224,19 +243,23 @@ export class Map {
 
     for (let y = 0; y < this.width; y++) {
       for (let x = 0; x < this.height; x++) {
-        const noise =
-          Math.floor(this.mapArrays[this.mapArrayIndex][`${x}-${y}`] * colorLevels) / colorLevels;
-        // const noise = this.mapArrays[this.mapArrayIndex][`${x}-${y}`];
+        // const noise =
+        // Math.floor(this.mapArrays[this.mapArrayIndex][`${x}-${y}`] * colorLevels) / colorLevels;
+        const noise = this.mapArrays[this.mapArrayIndex][`${x}-${y}`];
 
         let color: p5.Color;
+        // color = this.s.color("black");
         color = this.s.color(noise * 255, noise * 255, noise * 255);
-        if (noise > 0.7) {
+        // if (Math.floor(noise * 500) % 25 === 0) {
+        //   color = this.s.color("white");
+        // }
+        if (noise > 0.8) {
           color = this.s.lerpColor(
             this.s.color(mountainColorStart),
             this.s.color(mountainColorEnd),
             noise
           );
-        } else if (noise > 0.4) {
+        } else if (noise > 0.3) {
           color = this.s.lerpColor(
             this.s.color(grassColorStart),
             this.s.color(grassColorEnd),
@@ -262,15 +285,13 @@ export class Map {
   perlinNoise(x: number, y: number, random1: number, random2: number): number[] {
     // let color = [0, 0, 0];
     let color = 0;
-    const levels = 4;
-    const scale = 0.005;
+    const levels = 1;
+    const scale = 0.001;
 
-    color +=
-      (this.s?.noise(((x + random1) * scale) / 8, ((y + random1) * scale) / 8) * 2) / (levels + 1);
+    // color +=
+    //   (this.s?.noise(((x + random1) * scale) / 8, ((y + random1) * scale) / 8) * 2) / (levels + 1);
     for (let i = 0; i < levels; i++) {
-      color +=
-        this.s?.noise(((x + random2) * scale) / (i + 2), ((y + random2) * scale) / (i + 2)) /
-        (levels + 1);
+      color += this.s?.noise(x * (scale / (i + 2)), y * (scale / (i + 2)));
       color = Math.min(1, color);
     }
     return [color, color, color];
@@ -287,11 +308,9 @@ export class Map {
   zoomOut() {
     const pixelsPerRow = this.s.width / this.pixelSize;
     const pixelsPerCol = this.s.height / this.pixelSize;
-    if ((2 * this.s.width) / this.pixelSize <= this.width / 2) {
-      this.x += Math.ceil(-pixelsPerRow / 2);
-      this.y += Math.ceil(-pixelsPerCol / 2);
-      this.pixelSize /= 2;
-    }
+    this.x += Math.ceil(-pixelsPerRow / 2);
+    this.y += Math.ceil(-pixelsPerCol / 2);
+    this.pixelSize /= 2;
   }
 
   translate(coords: Coords) {
