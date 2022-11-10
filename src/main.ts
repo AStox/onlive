@@ -76,32 +76,40 @@ const sketch = (s: p5) => {
 
   let translation = { x: 0, y: 0 };
   s.keyPressed = function () {
+    const translationAmount = Math.max(
+      (config.TRANSLATTION_AMOUNT * config.PIXEL_SIZE) / map.pixelSize,
+      1
+    );
     if (s.keyCode === 187) {
       map.zoomIn();
     } else if (s.keyCode === 189) {
       map.zoomOut();
     } else if (s.keyCode === s.UP_ARROW) {
-      translation.y += (-1 * config.TRANSLATTION_AMOUNT * config.PIXEL_SIZE) / map.pixelSize;
+      translation.y += -1 * translationAmount;
     } else if (s.keyCode === s.DOWN_ARROW) {
-      translation.y += (1 * config.TRANSLATTION_AMOUNT * config.PIXEL_SIZE) / map.pixelSize;
+      translation.y += 1 * translationAmount;
     } else if (s.keyCode === s.LEFT_ARROW) {
-      translation.x += (-1 * config.TRANSLATTION_AMOUNT * config.PIXEL_SIZE) / map.pixelSize;
+      translation.x += -1 * translationAmount;
     } else if (s.keyCode === s.RIGHT_ARROW) {
-      translation.x += (1 * config.TRANSLATTION_AMOUNT * config.PIXEL_SIZE) / map.pixelSize;
+      translation.x += 1 * translationAmount;
     }
     map.translate(translation);
     map.draw();
   };
 
   s.keyReleased = function () {
+    const translationAmount = Math.max(
+      (config.TRANSLATTION_AMOUNT * config.PIXEL_SIZE) / map.pixelSize,
+      1
+    );
     if (s.keyCode === s.UP_ARROW) {
-      translation.y += (1 * config.TRANSLATTION_AMOUNT * config.PIXEL_SIZE) / map.pixelSize;
+      translation.y += 1 * translationAmount;
     } else if (s.keyCode === s.DOWN_ARROW) {
-      translation.y += (-1 * config.TRANSLATTION_AMOUNT * config.PIXEL_SIZE) / map.pixelSize;
+      translation.y += -1 * translationAmount;
     } else if (s.keyCode === s.LEFT_ARROW) {
-      translation.x += (1 * config.TRANSLATTION_AMOUNT * config.PIXEL_SIZE) / map.pixelSize;
+      translation.x += 1 * translationAmount;
     } else if (s.keyCode === s.RIGHT_ARROW) {
-      translation.x += (-1 * config.TRANSLATTION_AMOUNT * config.PIXEL_SIZE) / map.pixelSize;
+      translation.x += -1 * translationAmount;
     }
     map.translate(translation);
     map.draw();

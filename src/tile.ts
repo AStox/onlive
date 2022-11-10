@@ -41,7 +41,7 @@ export class Tile {
       this.map.pixelSize
     );
     this.contents.forEach((contents) => {
-      console.log(this.viewCoords);
+      // console.log(this.viewCoords);
       contents.draw();
       //   this.s.fill(contents.color);
       //   this.s.rect(

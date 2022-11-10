@@ -203,8 +203,8 @@ export class Map {
   zoomIn() {
     const pixelsPerRow = this.s.width / this.pixelSize;
     const pixelsPerCol = this.s.height / this.pixelSize;
-    this.x += pixelsPerRow / 4;
-    this.y += pixelsPerCol / 4;
+    this.x += Math.floor(pixelsPerRow / 4);
+    this.y += Math.floor(pixelsPerCol / 4);
     this.pixelSize *= 2;
   }
 
@@ -212,8 +212,8 @@ export class Map {
     const pixelsPerRow = this.s.width / this.pixelSize;
     const pixelsPerCol = this.s.height / this.pixelSize;
     if ((2 * this.s.width) / this.pixelSize <= this.width / 2) {
-      this.x += -pixelsPerRow / 2;
-      this.y += -pixelsPerCol / 2;
+      this.x += Math.ceil(-pixelsPerRow / 2);
+      this.y += Math.ceil(-pixelsPerCol / 2);
       this.pixelSize /= 2;
     }
   }

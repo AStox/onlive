@@ -56,7 +56,6 @@ export class Player {
 
   draw() {
     // this.s.beginPath();
-    console.log("---" + this.tile.viewCoords.x);
     const coords = {
       x: this.tile.viewCoords.x * this.map.pixelSize,
       y: this.tile.viewCoords.y * this.map.pixelSize,
