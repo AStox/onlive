@@ -84,7 +84,7 @@ export class Map {
     const players = [player];
     this.players = players;
 
-    this.generate(true);
+    this.generate(true, true);
 
     // set up player
     const tile = this.tiles[`0-0`];
@@ -100,6 +100,8 @@ export class Map {
   draw() {
     this.x += this.translation.x;
     this.y += this.translation.y;
+
+    this.generate(false, true);
 
     const erodeColor = getComputedStyle(document.documentElement).getPropertyValue("--red-med");
     const depositColor = getComputedStyle(document.documentElement).getPropertyValue(
@@ -177,7 +179,7 @@ export class Map {
     }
   }
 
-  generate(reload = false) {
+  generate(regenerateNoiseMap = false, regenerateFlow = false) {
     const grassColorStart = getComputedStyle(document.documentElement).getPropertyValue(
       "--green-dark"
     );
@@ -195,23 +197,22 @@ export class Map {
       "--grey-light"
     );
     const colorLevels = config.MAP_COLOUR_LEVELS;
-    if (reload) {
+    const seaLevel = 0.3;
+    const random1 = randomInt(this.width / 2, this.width);
+    const random2 = randomInt(this.width / 2, this.width);
+    if (regenerateNoiseMap) {
+      console.log("regenerating noise map");
       this.noiseMap = {};
-      const random1 = randomInt(this.width / 2, this.width);
-      const random2 = randomInt(this.width / 2, this.width);
       for (let y = 0; y < this.width; y += 1) {
         for (let x = 0; x < this.height; x += 1) {
           const radius = config.MAP_SIZE / 2;
           const power = 2;
           const fallOff = 0.4;
+
+          // noiseMod() applies a circular filter over the noise to darken the edges and makes an island
           const noiseMod = (x: number, y: number, fallOff: number, power: number) => {
-            const xFallOff = x > radius ? -fallOff : fallOff;
-            const yFallOff = y > radius ? -fallOff : fallOff;
             const dist = Math.pow(
               Math.pow(x - radius, power) + Math.pow(y - radius, power),
-              //       75 - 50 - 25
-              //       25 - 50 + 25
-              //       10 - 50
               1 / power
             );
             return dist > fallOff * radius ? 1 - (dist - fallOff * radius) / (radius * 1) : 1;
@@ -222,23 +223,16 @@ export class Map {
           this.noiseMap[`${x}-${y}`] = noise;
         }
       }
+    }
 
+    if (regenerateFlow) {
+      console.log("regenerating flow map");
       const e = new Erosion(this.s, this.width);
-      // this.mapArrays.push(e.test(this.noiseMap));
-      this.mapArrays.push(structuredClone(this.noiseMap));
-      const erosion = e.erode(this.noiseMap, this.flowCount);
-      // const erosion = e.erode(this.noiseMap, 1);
+      const erosion = e.erode(this.noiseMap, this.flowCount, seaLevel);
       this.mapArrays.push(erosion.map);
-      // const obj: { [key: string]: number } = {};
-      // Object.keys(this.noiseMap).map((key) => {
-      //   obj[key] = 0;
-      // });
-      // this.mapArrays.push(obj);
+      this.mapArrays.push(structuredClone(this.noiseMap));
 
-      // this.noiseMap = erosion.map;
       this.flowMap = erosion.flowMap;
-
-      // this.noiseMap = this.noiseMap.map((thing) => 1);
     }
 
     for (let y = 0; y < this.width; y++) {
@@ -259,7 +253,7 @@ export class Map {
             this.s.color(mountainColorEnd),
             noise
           );
-        } else if (noise > 0.3) {
+        } else if (noise > seaLevel) {
           color = this.s.lerpColor(
             this.s.color(grassColorStart),
             this.s.color(grassColorEnd),

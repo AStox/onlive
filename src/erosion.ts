@@ -18,12 +18,12 @@ export interface FlowMap {
 export class Erosion {
   s: p5;
   seed: number;
-  erosionRadius = 3;
+  erosionRadius = 2;
   inertia = 0.1; // At zero, water will instantly change direction to flow downhill. At 1, water will never change direction.
   sedimentCapacityFactor = 4; // Multiplier for how much sediment a droplet can carry
   minSedimentCapacity = 0.01; // Used to prevent carry capacity getting too close to zero on flatter terrain
-  erodeSpeed = 10.3;
-  depositSpeed = 0.3;
+  erodeSpeed = 0.1;
+  depositSpeed = 0.1;
   evaporateSpeed = 0.01;
   gravity = 4;
   maxDropletLifetime = 30;
@@ -32,6 +32,8 @@ export class Erosion {
   initialSpeed = 1;
 
   speedMod = 1;
+  erosionHeightMod = 0.01;
+  maxErode = 0.005;
 
   // Indices and weights of erosion brush precomputed for every node
   erosionBrushIndices: number[][];
@@ -57,7 +59,7 @@ export class Erosion {
     }
   }
 
-  erode(map: { [key: string]: number }, numIterations = 1) {
+  erode(map: { [key: string]: number }, numIterations = 1, seaLevel = 0) {
     const mapSize = this.currentMapSize;
     this.flowMap = [];
     for (let iteration = 0; iteration < numIterations; iteration++) {
@@ -74,32 +76,26 @@ export class Erosion {
         let nodeX = posX;
         let nodeY = posY;
         let dropletIndex = `${nodeX}-${nodeY}`;
-
         // Calculate droplet's height and direction of flow with bilinear interpolation of surrounding heights
         let heightAndGradient = this.CalculateHeightAndGradient(map, mapSize, posX, posY);
 
+        if (heightAndGradient.height < seaLevel) {
+          break;
+        }
+
         // Update the droplet's direction and position (move position 1 unit regardless of speed)
-        dirX = dirX * this.inertia - heightAndGradient.gradientX * (1 - this.inertia);
-        dirY = dirY * this.inertia - heightAndGradient.gradientY * (1 - this.inertia);
+        dirX =
+          dirX * (this.inertia * speed) - heightAndGradient.gradientX * (1 - this.inertia * speed);
+        dirY =
+          dirY * (this.inertia * speed) - heightAndGradient.gradientY * (1 - this.inertia * speed);
         // Normalize direction
         let len = Math.sqrt(dirX * dirX + dirY * dirY);
         if (len != 0) {
           dirX /= len;
           dirY /= len;
         }
-        if (config.DEBUG) {
-          console.log("------------BEGIN------------------");
-          console.log("posX", posX);
-          console.log("posY", posY);
-          console.log("heightAndGradient.gradientX", heightAndGradient.gradientX);
-          console.log("heightAndGradient.gradientY", heightAndGradient.gradientY);
-          console.log("dirX", dirX);
-          console.log("dirY", dirY);
-        }
         posX += dirX * this.speedMod;
         posY += dirY * this.speedMod;
-        // posX += 1;
-        // posY += 1;
 
         // Stop simulating droplet if it's not moving or has flowed over edge of map
         if (
@@ -115,30 +111,18 @@ export class Erosion {
 
         // Find the droplet's new height and calculate the deltaHeight
         let newHeight = this.CalculateHeightAndGradient(map, mapSize, posX, posY).height;
-        if (config.DEBUG) {
-          console.log("-------new height------");
-          console.log("=======");
-          console.log("heightAndGradient.height", heightAndGradient.height);
-          console.log("newHeight", newHeight);
-          console.log("=======");
-        }
+
         let deltaHeight = newHeight - heightAndGradient.height;
 
         // Calculate the droplet's sediment capacity (higher when moving fast down a slope and contains lots of water)
         let sedimentCapacity = Math.max(
-          -deltaHeight * speed * water * this.sedimentCapacityFactor,
+          -deltaHeight *
+            speed *
+            water *
+            this.sedimentCapacityFactor *
+            (heightAndGradient.height - seaLevel),
           this.minSedimentCapacity
         );
-        if (false) {
-          console.log("---------", lifetime);
-          console.log("deltaHeight:", deltaHeight);
-          console.log("speed", speed);
-          console.log("water", water);
-          console.log("this.sedimentCapacityFactor", this.sedimentCapacityFactor);
-          console.log("this.minSedimentCapacity", this.minSedimentCapacity);
-          console.log("sediment", sediment);
-          console.log("sedimentCapacity", sedimentCapacity);
-        }
         // If carrying more sediment than capacity, or if flowing uphill:
         let newFlow: FlowMap = {
           x: posX,
@@ -147,8 +131,13 @@ export class Erosion {
           color: heightAndGradient.height,
           depositing: true,
         };
-        console.log("deltaHeight:", deltaHeight);
-        if (sediment > sedimentCapacity || deltaHeight > 0) {
+        if (
+          sediment > sedimentCapacity ||
+          deltaHeight > 0 ||
+          lifetime === this.maxDropletLifetime - 1 ||
+          water * 1 - this.evaporateSpeed < 0.01 ||
+          heightAndGradient.height < seaLevel
+        ) {
           // if (-deltaHeight < 0.0001) {
           // if (false) {
           // If moving uphill (deltaHeight > 0) try fill up to the current height, otherwise deposit a fraction of the excess sediment
@@ -156,51 +145,65 @@ export class Erosion {
           //   (sediment - sedimentCapacity) * this.depositSpeed,
           //   -deltaHeight
           // );
-          let amountToDeposit = -deltaHeight;
-          // deltaHeight > 0
-          //   ? Math.min(deltaHeight, sediment)
-          //   : (sediment - sedimentCapacity) * this.depositSpeed;
-          // sediment -= amountToDeposit;
+          let amountToDeposit =
+            deltaHeight > 0
+              ? Math.min(deltaHeight, sediment)
+              : (sediment - sedimentCapacity) * this.depositSpeed;
+
+          let amountToErode = Math.min(
+            Math.min(
+              (sedimentCapacity - sediment) * this.erodeSpeed,
+              -deltaHeight * this.erosionHeightMod
+            ),
+            this.maxErode * heightAndGradient.height
+          );
+          // if (lifetime === this.maxDropletLifetime - 1) {
+          //   amountToDeposit = sediment;
+          // }
+          sediment -= amountToDeposit;
           // Add the sediment to the four nodes of the current cell using bilinear interpolation
           // Deposition is not distributed over a radius (like erosion) so that it can fill small pits
-          map[`${nodeX}-${nodeY}`] += amountToDeposit; //NW SE
-          map[`${nodeX - 1}-${nodeY}`] += amountToDeposit; //NE SW
-          map[`${nodeX}-${nodeY - 1}`] += amountToDeposit; //SW NE
-          map[`${nodeX - 1}-${nodeY - 1}`] += amountToDeposit; // SE NW
-          // let radius = this.erosionRadius;
-          // for (let y = -radius; y <= radius; y++) {
-          //   for (let x = -radius; x <= radius; x++) {
-          //     let sqrDst = x * x + y * y;
-          //     if (sqrDst < radius * radius) {
-          //       let coordX = Math.floor(posX) + x;
-          //       let coordY = Math.floor(posY) + y;
 
-          //       if (coordX >= 0 && coordX < mapSize && coordY >= 0 && coordY < mapSize) {
-          //         let weight = 1 - Math.sqrt(sqrDst) / radius || 0;
-          //         const offset = `${coordX}-${coordY}`;
-          //         // Use erosion brush to erode from all nodes inside the droplet's erosion radius
-          //         let deltaSediment = amountToDeposit * weight;
-          //         // map[offset] > amountToDeposit * weight ? map[offset] : amountToDeposit * weight;
-          //         if (config.DEBUG) {
-          //           console.log(`coordX: ${coordX}, coordY: ${coordY}`);
-          //           console.log("amountToDeposit", amountToDeposit);
-          //           console.log("weight", weight);
-          //           console.log("deltaSediment", deltaSediment);
-          //         }
-          //         map[offset] += deltaSediment;
-          //         sediment = Math.max(sediment - deltaSediment, 0);
-          //       }
-          //     }
-          //   }
-          // }
+          // map[`${nodeX}-${nodeY}`] += amountToDeposit * 0.25; //NW SE
+          // map[`${nodeX - 1}-${nodeY}`] += amountToDeposit * 0.25; //NE SW
+          // map[`${nodeX}-${nodeY - 1}`] += amountToDeposit * 0.25; //SW NE
+          // map[`${nodeX - 1}-${nodeY - 1}`] += amountToDeposit * 0.25; // SE NW
+
+          let radius = this.erosionRadius;
+          for (let y = -radius; y <= radius; y++) {
+            for (let x = -radius; x <= radius; x++) {
+              let sqrDst = x * x + y * y;
+              if (sqrDst < radius * radius) {
+                let coordX = Math.floor(posX) + x;
+                let coordY = Math.floor(posY) + y;
+
+                if (coordX >= 0 && coordX < mapSize && coordY >= 0 && coordY < mapSize) {
+                  let weight = 1 - Math.sqrt(sqrDst) / radius || 0;
+                  const offset = `${coordX}-${coordY}`;
+                  // Use erosion brush to erode from all nodes inside the droplet's erosion radius
+                  let deltaSediment = amountToDeposit * weight;
+
+                  map[offset] =
+                    map[offset] + deltaSediment > map[dropletIndex] + amountToDeposit
+                      ? map[offset]
+                      : map[offset] + deltaSediment;
+
+                  sediment -= Math.max(deltaSediment, 0);
+                }
+              }
+            }
+          }
         } else {
           // Erode a fraction of the droplet's current carry capacity.
           // Clamp the erosion to the change in height so that it doesn't dig a hole in the terrain behind the droplet
           newFlow.depositing = false;
 
           let amountToErode = Math.min(
-            Math.min((sedimentCapacity - sediment) * this.erodeSpeed, -deltaHeight * 0.1),
-            0.0005
+            Math.min(
+              (sedimentCapacity - sediment) * this.erodeSpeed,
+              -deltaHeight * this.erosionHeightMod
+            ),
+            this.maxErode * heightAndGradient.height
           );
           if (config.DEBUG) {
             console.log("sedimentCapacity", sedimentCapacity);
