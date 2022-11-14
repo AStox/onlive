@@ -75,9 +75,8 @@ const sketch = (s: p5) => {
 
   let translation = { x: 0, y: 0 };
   s.keyPressed = function () {
-    const translationAmount = Math.max(
-      (config.TRANSLATTION_AMOUNT * config.PIXEL_SIZE) / map.pixelSize,
-      1
+    const translationAmount = Math.ceil(
+      (config.TRANSLATTION_AMOUNT * config.PIXEL_SIZE) / map.pixelSize
     );
     if (s.keyCode === 187) {
       map.zoomIn();
@@ -100,13 +99,12 @@ const sketch = (s: p5) => {
     }
     console.log("keycode: ", s.keyCode);
     map.translate(translation);
-    map.draw();
+    map.draw(false);
   };
 
   s.keyReleased = function () {
-    const translationAmount = Math.max(
-      (config.TRANSLATTION_AMOUNT * config.PIXEL_SIZE) / map.pixelSize,
-      1
+    const translationAmount = Math.ceil(
+      (config.TRANSLATTION_AMOUNT * config.PIXEL_SIZE) / map.pixelSize
     );
     if (s.keyCode === s.UP_ARROW) {
       translation.y += 1 * translationAmount;
@@ -118,7 +116,7 @@ const sketch = (s: p5) => {
       translation.x += -1 * translationAmount;
     }
     map.translate(translation);
-    map.draw();
+    map.draw(false);
   };
 
   function tick() {

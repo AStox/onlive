@@ -97,11 +97,11 @@ export class Map {
     this.passageOfTime();
   }
 
-  draw() {
+  draw(redraw = true) {
     this.x += this.translation.x;
     this.y += this.translation.y;
 
-    this.generate(false, true);
+    this.generate(false, redraw);
 
     const erodeColor = getComputedStyle(document.documentElement).getPropertyValue("--red-med");
     const depositColor = getComputedStyle(document.documentElement).getPropertyValue(
@@ -197,7 +197,7 @@ export class Map {
       "--grey-light"
     );
     const colorLevels = config.MAP_COLOUR_LEVELS;
-    const seaLevel = 0.3;
+    const seaLevel = 0.25;
     const random1 = randomInt(this.width / 2, this.width);
     const random2 = randomInt(this.width / 2, this.width);
     if (regenerateNoiseMap) {
@@ -217,9 +217,21 @@ export class Map {
             );
             return dist > fallOff * radius ? 1 - (dist - fallOff * radius) / (radius * 1) : 1;
           };
-          const noise =
+          let noise =
             this.perlinNoise(x * config.NOISE_SIZE, y * config.NOISE_SIZE, random1, random2)[0] *
             noiseMod(x, y, fallOff, power);
+
+          // let testMod = Math.pow(
+          //   Math.pow(x - radius, power) + Math.pow(y - radius, power),
+          //   1 / power
+          // );
+          // if (testMod > fallOff * radius) {
+          //   testMod = (testMod - fallOff * radius) / (radius * 1);
+          // } else {
+          //   testMod = 0;
+          // }
+          // noise = testMod;
+
           this.noiseMap[`${x}-${y}`] = noise;
         }
       }

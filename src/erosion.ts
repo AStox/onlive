@@ -18,12 +18,12 @@ export interface FlowMap {
 export class Erosion {
   s: p5;
   seed: number;
-  erosionRadius = 2;
-  inertia = 0.1; // At zero, water will instantly change direction to flow downhill. At 1, water will never change direction.
+  erosionRadius = 5;
+  inertia = 0.05; // At zero, water will instantly change direction to flow downhill. At 1, water will never change direction.
   sedimentCapacityFactor = 4; // Multiplier for how much sediment a droplet can carry
   minSedimentCapacity = 0.01; // Used to prevent carry capacity getting too close to zero on flatter terrain
-  erodeSpeed = 0.1;
-  depositSpeed = 0.1;
+  erodeSpeed = 0.3;
+  depositSpeed = 0.3;
   evaporateSpeed = 0.01;
   gravity = 4;
   maxDropletLifetime = 30;
@@ -79,9 +79,9 @@ export class Erosion {
         // Calculate droplet's height and direction of flow with bilinear interpolation of surrounding heights
         let heightAndGradient = this.CalculateHeightAndGradient(map, mapSize, posX, posY);
 
-        if (heightAndGradient.height < seaLevel) {
-          break;
-        }
+        // if (heightAndGradient.height < seaLevel) {
+        //   break;
+        // }
 
         // Update the droplet's direction and position (move position 1 unit regardless of speed)
         dirX =
@@ -136,7 +136,7 @@ export class Erosion {
           deltaHeight > 0 ||
           lifetime === this.maxDropletLifetime - 1 ||
           water * 1 - this.evaporateSpeed < 0.01 ||
-          heightAndGradient.height < seaLevel
+          newHeight < seaLevel
         ) {
           // if (-deltaHeight < 0.0001) {
           // if (false) {
@@ -150,13 +150,9 @@ export class Erosion {
               ? Math.min(deltaHeight, sediment)
               : (sediment - sedimentCapacity) * this.depositSpeed;
 
-          let amountToErode = Math.min(
-            Math.min(
-              (sedimentCapacity - sediment) * this.erodeSpeed,
-              -deltaHeight * this.erosionHeightMod
-            ),
-            this.maxErode * heightAndGradient.height
-          );
+          if (newHeight < seaLevel) {
+            amountToDeposit = sediment * this.depositSpeed;
+          }
           // if (lifetime === this.maxDropletLifetime - 1) {
           //   amountToDeposit = sediment;
           // }
@@ -181,7 +177,9 @@ export class Erosion {
                   let weight = 1 - Math.sqrt(sqrDst) / radius || 0;
                   const offset = `${coordX}-${coordY}`;
                   // Use erosion brush to erode from all nodes inside the droplet's erosion radius
-                  let deltaSediment = amountToDeposit * weight;
+                  // (1 / (2 * (radius - 0.3333333333333333))) is used to normalize the amount eroded/deposited to 1;
+                  let deltaSediment =
+                    amountToDeposit * weight * (1 / (2 * (radius - 0.3333333333333333)));
 
                   map[offset] =
                     map[offset] + deltaSediment > map[dropletIndex] + amountToDeposit
@@ -203,7 +201,7 @@ export class Erosion {
               (sedimentCapacity - sediment) * this.erodeSpeed,
               -deltaHeight * this.erosionHeightMod
             ),
-            this.maxErode * heightAndGradient.height
+            this.maxErode * newHeight
           );
           if (config.DEBUG) {
             console.log("sedimentCapacity", sedimentCapacity);
@@ -222,7 +220,9 @@ export class Erosion {
                   let weight = 1 - Math.sqrt(sqrDst) / radius || 0;
                   const offset = `${coordX}-${coordY}`;
                   // Use erosion brush to erode from all nodes inside the droplet's erosion radius
-                  let deltaSediment = amountToErode * weight;
+                  // (1 / (2 * (radius - 0.3333333333333333))) is used to normalize the amount eroded/deposited to 1;
+                  let deltaSediment =
+                    amountToErode * weight * (1 / (2 * (radius - 0.3333333333333333)));
                   // map[offset] < amountToErode * weight ? map[offset] : amountToErode * weight;
                   if (config.DEBUG) {
                     console.log(`coordX: ${coordX}, coordY: ${coordY}`);
