@@ -1,27 +1,14 @@
-import p5 from "p5";
-import { Board } from "./board";
 import { Map } from "./map";
-import { Player } from "./player";
-import { Interest } from "./interest";
-import {
-  Coords,
-  currentPixelSize,
-  perlinNoise,
-  pixelCoords,
-  randomInt,
-  randomNoise,
-} from "./utils";
-import { Area } from "./area";
+import { Coords } from "./utils";
 import config from "./config.json";
+import { Renderer } from "./renderer";
 
 const CANVAS_SIZE = config.CANVAS_SIZE;
 const TRANSLATTION_AMOUNT = config.TRANSLATTION_AMOUNT;
-const canvas = document.getElementById("myCanvas") as HTMLCanvasElement;
-canvas.setAttribute("width", `${CANVAS_SIZE}`);
-canvas.setAttribute("height", `${CANVAS_SIZE}`);
-const noise = document.getElementById("noise") as HTMLCanvasElement;
-noise.setAttribute("width", `${CANVAS_SIZE}`);
-noise.setAttribute("height", `${CANVAS_SIZE}`);
+// const canvas = document.getElementById("myCanvas") as HTMLCanvasElement;
+// const noise = document.getElementById("noise") as HTMLCanvasElement;
+// noise.setAttribute("width", `${CANVAS_SIZE}`);
+// noise.setAttribute("height", `${CANVAS_SIZE}`);
 // canvas.addEventListener("click", function () {}, false);
 
 let paused = false;
@@ -33,100 +20,108 @@ document.addEventListener("keydown", function (event) {
 });
 
 function zoomIn() {
-  ctx.translate(-CANVAS_SIZE / 2, -CANVAS_SIZE / 2);
-  ctx.scale(2, 2);
+  // ctx.translate(-CANVAS_SIZE / 2, -CANVAS_SIZE / 2);
+  // ctx.scale(2, 2);
 }
 
 function zoomOut() {
-  ctx.scale(0.5, 0.5);
-  ctx.translate(CANVAS_SIZE / 2, CANVAS_SIZE / 2);
+  // ctx.scale(0.5, 0.5);
+  // ctx.translate(CANVAS_SIZE / 2, CANVAS_SIZE / 2);
 }
 
 function translate(amount: Coords) {
-  ctx.translate(amount.x, amount.y);
+  // ctx.translate(amount.x, amount.y);
 }
-const ctx = canvas.getContext("2d");
-// zoomIn();
-// zoomIn();
 
-const sketch = (s: p5) => {
-  let map: Map;
+const renderer = new Renderer(config.CANVAS_SIZE, config.CANVAS_SIZE);
+console.log(renderer.gl);
+if (renderer.gl) {
+  setInterval(() => renderer.run(), 42);
+} else {
+  console.log("WebGL not supported");
+}
+const mapSize = config.MAP_SIZE;
+const map = new Map(0, 0, mapSize, mapSize, "#2B2118", "black");
+// renderer.map = map.map;
 
-  s.setup = function () {
-    s.createCanvas(1000, 1000);
-    const mapSize = config.MAP_SIZE;
-    map = new Map(0, 0, mapSize, mapSize, "#2B2118", "black", s);
-    // const area1 = Area.randomArea(0, s.width, 0, s.height, 50, s.height, s);
-    // const area2 = Area.randomArea(0, s.width, 0, s.height, 50, s.height, s);
-    // const area3 = Area.randomArea(0, s.width, 0, s.height, 50, s.height, s);
-    // map.areas = [area1, area2, area3];
-  };
+// const ctx = canvas.getContext("2d");
 
-  s.draw = function () {
-    if (!paused) {
-      s.background(120);
-      s.frameRate(24);
-      map.tick();
-      map.players.forEach((player) => player.tick(map));
-      // map.areas.forEach((area) => area.tick());
-      // displayGrid();
-    }
-  };
+// const sketch = (s: p5) => {
+//   let map: Map;
 
-  let translation = { x: 0, y: 0 };
-  s.keyPressed = function () {
-    const translationAmount = Math.ceil(
-      (config.TRANSLATTION_AMOUNT * config.PIXEL_SIZE) / map.pixelSize
-    );
-    if (s.keyCode === 187) {
-      map.zoomIn();
-    } else if (s.keyCode === 189) {
-      map.zoomOut();
-    } else if (s.keyCode === s.UP_ARROW) {
-      translation.y += -1 * translationAmount;
-    } else if (s.keyCode === s.DOWN_ARROW) {
-      translation.y += 1 * translationAmount;
-    } else if (s.keyCode === s.LEFT_ARROW) {
-      translation.x += -1 * translationAmount;
-    } else if (s.keyCode === s.RIGHT_ARROW) {
-      translation.x += 1 * translationAmount;
-    } else if (s.keyCode === s.SHIFT) {
-      map.switch();
-    } else if (s.keyCode === 83) {
-      map.switch();
-    } else if (s.keyCode === 65) {
-      map.toggleFlowMap();
-    }
-    console.log("keycode: ", s.keyCode);
-    map.translate(translation);
-    map.draw(false);
-  };
+//   s.setup = function () {
+//     s.createCanvas(1000, 1000);
+//     // const area1 = Area.randomArea(0, s.width, 0, s.height, 50, s.height, s);
+//     // const area2 = Area.randomArea(0, s.width, 0, s.height, 50, s.height, s);
+//     // const area3 = Area.randomArea(0, s.width, 0, s.height, 50, s.height, s);
+//     // map.areas = [area1, area2, area3];
+//   };
 
-  s.keyReleased = function () {
-    const translationAmount = Math.ceil(
-      (config.TRANSLATTION_AMOUNT * config.PIXEL_SIZE) / map.pixelSize
-    );
-    if (s.keyCode === s.UP_ARROW) {
-      translation.y += 1 * translationAmount;
-    } else if (s.keyCode === s.DOWN_ARROW) {
-      translation.y += -1 * translationAmount;
-    } else if (s.keyCode === s.LEFT_ARROW) {
-      translation.x += 1 * translationAmount;
-    } else if (s.keyCode === s.RIGHT_ARROW) {
-      translation.x += -1 * translationAmount;
-    }
-    map.translate(translation);
-    map.draw(false);
-  };
+//   s.draw = function () {
+//     if (!paused) {
+//       s.background(120);
+//       s.frameRate(24);
+//       map.tick();
+//       map.players.forEach((player) => player.tick(map));
+//       // map.areas.forEach((area) => area.tick());
+//       // displayGrid();
+//     }
+//   };
 
-  function tick() {
-    // draw();
-  }
-  setInterval(tick, 200);
+//   let translation = { x: 0, y: 0 };
+//   s.keyPressed = function () {
+//     const translationAmount = Math.ceil(
+//       (config.TRANSLATTION_AMOUNT * config.PIXEL_SIZE) / map.pixelSize
+//     );
+//     if (s.keyCode === 187) {
+//       map.zoomIn();
+//     } else if (s.keyCode === 189) {
+//       map.zoomOut();
+//     } else if (s.keyCode === s.UP_ARROW) {
+//       translation.y += -1 * translationAmount;
+//     } else if (s.keyCode === s.DOWN_ARROW) {
+//       translation.y += 1 * translationAmount;
+//     } else if (s.keyCode === s.LEFT_ARROW) {
+//       translation.x += -1 * translationAmount;
+//     } else if (s.keyCode === s.RIGHT_ARROW) {
+//       translation.x += 1 * translationAmount;
+//     } else if (s.keyCode === s.SHIFT) {
+//       map.switch();
+//     } else if (s.keyCode === 83) {
+//       map.switch();
+//     } else if (s.keyCode === 65) {
+//       map.toggleFlowMap();
+//     }
+//     console.log("keycode: ", s.keyCode);
+//     map.translate(translation);
+//     map.draw(false);
+//   };
 
-  // function displ
-};
-new p5(sketch);
+//   s.keyReleased = function () {
+//     const translationAmount = Math.ceil(
+//       (config.TRANSLATTION_AMOUNT * config.PIXEL_SIZE) / map.pixelSize
+//     );
+//     if (s.keyCode === s.UP_ARROW) {
+//       translation.y += 1 * translationAmount;
+//     } else if (s.keyCode === s.DOWN_ARROW) {
+//       translation.y += -1 * translationAmount;
+//     } else if (s.keyCode === s.LEFT_ARROW) {
+//       translation.x += 1 * translationAmount;
+//     } else if (s.keyCode === s.RIGHT_ARROW) {
+//       translation.x += -1 * translationAmount;
+//     }
+//     map.translate(translation);
+//     map.draw(false);
+//   };
+
+//   function tick() {
+//     // draw();
+//   }
+//   setInterval(tick, 200);
+
+//   // function displ
+// };
+// new p5(sketch);
 
 // TODO: pixelize it! Use real positions in the background but draw functions should use a utility function to pixelize rects and force them to a small grid
 

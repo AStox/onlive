@@ -1,3 +1,5 @@
+const path = require("path");
+
 module.exports = {
   entry: "./src/app.ts",
   mode: "development",
@@ -27,24 +29,32 @@ module.exports = {
         exclude: /node_modules/,
         use: "ts-loader",
       },
+      {
+        test: /\.glsl$/,
+        exclude: /node_modules/,
+        loader: "webpack-glsl-loader",
+      },
     ],
   },
   resolve: {
     extensions: [".tsx", ".ts", ".js"],
   },
-  // devServer: {
-  //   // Serve index.html as the base
-  //   // contentBase: `${__dirname}/public`,
+  devServer: {
+    // Serve index.html as the base
+    // contentBase: `${__dirname}/public`,
+    static: {
+      directory: path.join(__dirname, "public"),
+    },
 
-  //   // Enable compression
-  //   // compress: true,
+    // Enable compression
+    compress: true,
 
-  //   // Enable hot reloading
-  //   hot: true,
+    // Enable hot reloading
+    hot: true,
 
-  //   port: 3000,
+    port: 3000,
 
-  //   // // Public path is root of content base
-  //   // publicPath: "/",
-  // },
+    // // Public path is root of content base
+    // publicPath: "/",
+  },
 };

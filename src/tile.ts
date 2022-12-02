@@ -3,24 +3,15 @@ import { Coords } from "./utils";
 import { Map } from "./map";
 
 export class Tile {
-  s: p5;
   map: Map;
   coords: Coords;
-  color: p5.Color;
+  color: number[];
   terrain: string;
   elevation: number;
   contents: any[];
   viewCoords: Coords;
 
-  constructor(
-    _s: p5,
-    _map: Map,
-    _coords: Coords,
-    _color: p5.Color,
-    _terrain: string,
-    _elevation: number
-  ) {
-    this.s = _s;
+  constructor(_map: Map, _coords: Coords, _color: number[], _terrain: string, _elevation: number) {
     this.map = _map;
     this.coords = _coords;
     this.color = _color;
@@ -32,23 +23,23 @@ export class Tile {
   tick() {}
 
   draw(viewCoords: Coords) {
-    this.viewCoords = viewCoords;
-    this.s.fill(this.color);
-    this.s.rect(
-      viewCoords.x * this.map.pixelSize,
-      viewCoords.y * this.map.pixelSize,
-      this.map.pixelSize,
-      this.map.pixelSize
-    );
-    this.contents.forEach((contents) => {
-      contents.draw();
-      //   this.s.fill(contents.color);
-      //   this.s.rect(
-      //     viewCoords.x * this.map.pixelSize,
-      //     viewCoords.y * this.map.pixelSize,
-      //     this.map.pixelSize,
-      //     this.map.pixelSize
-      //   );
-    });
+    // this.viewCoords = viewCoords;
+    // this.s.fill(this.color);
+    // this.s.rect(
+    //   viewCoords.x * this.map.pixelSize,
+    //   viewCoords.y * this.map.pixelSize,
+    //   this.map.pixelSize,
+    //   this.map.pixelSize
+    // );
+    // this.contents.forEach((contents) => {
+    //   contents.draw();
+    //   //   this.s.fill(contents.color);
+    //   //   this.s.rect(
+    //   //     viewCoords.x * this.map.pixelSize,
+    //   //     viewCoords.y * this.map.pixelSize,
+    //   //     this.map.pixelSize,
+    //   //     this.map.pixelSize
+    //   //   );
+    // });
   }
 }

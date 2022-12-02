@@ -132,3 +132,17 @@ export function currentPixelSize(ctx: CanvasRenderingContext2D) {
 export function grey(s: p5, num: number) {
   return s.color(num, num, num);
 }
+
+export function readFile(file: string) {
+  let rawFile = new XMLHttpRequest();
+  rawFile.open("GET", file, false);
+  rawFile.onreadystatechange = function () {
+    if (rawFile.readyState === 4) {
+      if (rawFile.status === 200 || rawFile.status == 0) {
+        var allText = rawFile.responseText;
+        alert(allText);
+      }
+    }
+  };
+  rawFile.send(null);
+}

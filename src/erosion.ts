@@ -1,4 +1,3 @@
-import p5 from "p5";
 import { randomFloat, randomInt } from "./utils";
 import config from "./config.json";
 
@@ -16,13 +15,12 @@ export interface FlowMap {
   depositing: boolean;
 }
 export class Erosion {
-  s: p5;
   seed: number;
   erosionRadius = 5;
-  inertia = 0.05; // At zero, water will instantly change direction to flow downhill. At 1, water will never change direction.
+  inertia = 0.01; // At zero, water will instantly change direction to flow downhill. At 1, water will never change direction.
   sedimentCapacityFactor = 4; // Multiplier for how much sediment a droplet can carry
   minSedimentCapacity = 0.01; // Used to prevent carry capacity getting too close to zero on flatter terrain
-  erodeSpeed = 0.3;
+  erodeSpeed = 1.3;
   depositSpeed = 0.3;
   evaporateSpeed = 0.01;
   gravity = 4;
@@ -34,6 +32,7 @@ export class Erosion {
   speedMod = 1;
   erosionHeightMod = 0.01;
   maxErode = 0.005;
+  maxDisplacement = 0.01;
 
   // Indices and weights of erosion brush precomputed for every node
   erosionBrushIndices: number[][];
@@ -46,8 +45,7 @@ export class Erosion {
   flowMap: FlowMap[][];
 
   // Initialization creates a System.Random object and precomputes indices and weights of erosion brush
-  constructor(_s: p5, mapSize: number) {
-    this.s = _s;
+  constructor(mapSize: number) {
     if (
       this.erosionBrushIndices == null ||
       this.currentErosionRadius != this.erosionRadius ||
@@ -60,6 +58,7 @@ export class Erosion {
   }
 
   erode(map: { [key: string]: number }, numIterations = 1, seaLevel = 0) {
+    const originalMap = structuredClone(map);
     const mapSize = this.currentMapSize;
     this.flowMap = [];
     for (let iteration = 0; iteration < numIterations; iteration++) {
@@ -79,9 +78,7 @@ export class Erosion {
         // Calculate droplet's height and direction of flow with bilinear interpolation of surrounding heights
         let heightAndGradient = this.CalculateHeightAndGradient(map, mapSize, posX, posY);
 
-        // if (heightAndGradient.height < seaLevel) {
-        //   break;
-        // }
+        // this.inertia = this.inertia * heightAndGradient.height;
 
         // Update the droplet's direction and position (move position 1 unit regardless of speed)
         dirX =
@@ -116,11 +113,8 @@ export class Erosion {
 
         // Calculate the droplet's sediment capacity (higher when moving fast down a slope and contains lots of water)
         let sedimentCapacity = Math.max(
-          -deltaHeight *
-            speed *
-            water *
-            this.sedimentCapacityFactor *
-            (heightAndGradient.height - seaLevel),
+          -deltaHeight * speed * water * this.sedimentCapacityFactor,
+          // (heightAndGradient.height - seaLevel),
           this.minSedimentCapacity
         );
         // If carrying more sediment than capacity, or if flowing uphill:
@@ -134,8 +128,8 @@ export class Erosion {
         if (
           sediment > sedimentCapacity ||
           deltaHeight > 0 ||
-          lifetime === this.maxDropletLifetime - 1 ||
-          water * 1 - this.evaporateSpeed < 0.01 ||
+          // lifetime === this.maxDropletLifetime - 1 ||
+          // water * 1 - this.evaporateSpeed < 0.01 ||
           newHeight < seaLevel
         ) {
           // if (-deltaHeight < 0.0001) {
@@ -146,17 +140,21 @@ export class Erosion {
           //   -deltaHeight
           // );
           let amountToDeposit =
-            deltaHeight > 0
-              ? Math.min(deltaHeight, sediment)
-              : (sediment - sedimentCapacity) * this.depositSpeed;
+            deltaHeight > 0 ? Math.min(deltaHeight, sediment) : sediment * this.depositSpeed;
+          // console.log("deltaHeight", deltaHeight);
+          // console.log("sediment", sediment);
+          // console.log("amountToDeposit", amountToDeposit);
+          // console.log("seaLevel", seaLevel);
+          // console.log("newHeight", newHeight);
 
           if (newHeight < seaLevel) {
             amountToDeposit = sediment * this.depositSpeed;
           }
+          amountToDeposit = Math.max(amountToDeposit, 0);
           // if (lifetime === this.maxDropletLifetime - 1) {
           //   amountToDeposit = sediment;
           // }
-          sediment -= amountToDeposit;
+          // sediment -= amountToDeposit;
           // Add the sediment to the four nodes of the current cell using bilinear interpolation
           // Deposition is not distributed over a radius (like erosion) so that it can fill small pits
 
@@ -170,16 +168,20 @@ export class Erosion {
             for (let x = -radius; x <= radius; x++) {
               let sqrDst = x * x + y * y;
               if (sqrDst < radius * radius) {
-                let coordX = Math.floor(posX) + x;
-                let coordY = Math.floor(posY) + y;
+                let coordX = Math.floor(nodeX) + x;
+                let coordY = Math.floor(nodeY) + y;
 
                 if (coordX >= 0 && coordX < mapSize && coordY >= 0 && coordY < mapSize) {
                   let weight = 1 - Math.sqrt(sqrDst) / radius || 0;
                   const offset = `${coordX}-${coordY}`;
                   // Use erosion brush to erode from all nodes inside the droplet's erosion radius
                   // (1 / (2 * (radius - 0.3333333333333333))) is used to normalize the amount eroded/deposited to 1;
+
                   let deltaSediment =
                     amountToDeposit * weight * (1 / (2 * (radius - 0.3333333333333333)));
+                  // (1 -
+                  // Math.min(Math.abs(originalMap[offset] - map[offset]), this.maxDisplacement) /
+                  //   this.maxDisplacement);
 
                   map[offset] =
                     map[offset] + deltaSediment > map[dropletIndex] + amountToDeposit
@@ -197,12 +199,16 @@ export class Erosion {
           newFlow.depositing = false;
 
           let amountToErode = Math.min(
-            Math.min(
-              (sedimentCapacity - sediment) * this.erodeSpeed,
-              -deltaHeight * this.erosionHeightMod
-            ),
-            this.maxErode * newHeight
+            (sedimentCapacity - sediment) * this.erodeSpeed,
+            -deltaHeight * this.erosionHeightMod
           );
+          // let amountToErode = Math.min(
+          //   Math.min(
+          //     (sedimentCapacity - sediment) * this.erodeSpeed,
+          //     -deltaHeight * this.erosionHeightMod
+          //   ),
+          //   this.maxErode * newHeight
+          // );
           if (config.DEBUG) {
             console.log("sedimentCapacity", sedimentCapacity);
             console.log("sediment", sediment);
@@ -213,8 +219,8 @@ export class Erosion {
             for (let x = -radius; x <= radius; x++) {
               let sqrDst = x * x + y * y;
               if (sqrDst < radius * radius) {
-                let coordX = Math.floor(posX) + x;
-                let coordY = Math.floor(posY) + y;
+                let coordX = Math.floor(nodeX) + x;
+                let coordY = Math.floor(nodeY) + y;
 
                 if (coordX >= 0 && coordX < mapSize && coordY >= 0 && coordY < mapSize) {
                   let weight = 1 - Math.sqrt(sqrDst) / radius || 0;
@@ -223,6 +229,9 @@ export class Erosion {
                   // (1 / (2 * (radius - 0.3333333333333333))) is used to normalize the amount eroded/deposited to 1;
                   let deltaSediment =
                     amountToErode * weight * (1 / (2 * (radius - 0.3333333333333333)));
+                  // (1 -
+                  //   Math.min(Math.abs(originalMap[offset] - map[offset]), this.maxDisplacement) /
+                  //     this.maxDisplacement);
                   // map[offset] < amountToErode * weight ? map[offset] : amountToErode * weight;
                   if (config.DEBUG) {
                     console.log(`coordX: ${coordX}, coordY: ${coordY}`);
