@@ -1,4 +1,4 @@
-import { Map } from "./map";
+import { TerrainMap } from "./map";
 import { Coords } from "./utils";
 import config from "./config.json";
 import { Renderer } from "./renderer";
@@ -33,15 +33,14 @@ function translate(amount: Coords) {
   // ctx.translate(amount.x, amount.y);
 }
 
-const renderer = new Renderer(config.CANVAS_SIZE, config.CANVAS_SIZE);
-console.log(renderer.gl);
+const mapSize = config.MAP_SIZE;
+const map = new TerrainMap(0, 0, mapSize, mapSize);
+const renderer = new Renderer(config.CANVAS_SIZE, config.CANVAS_SIZE, map);
 if (renderer.gl) {
   setInterval(() => renderer.run(), 42);
 } else {
   console.log("WebGL not supported");
 }
-const mapSize = config.MAP_SIZE;
-const map = new Map(0, 0, mapSize, mapSize, "#2B2118", "black");
 // renderer.map = map.map;
 
 // const ctx = canvas.getContext("2d");

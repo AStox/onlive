@@ -1,6 +1,3 @@
-import { Area } from "./area";
-import { Interest } from "./interest";
-import { Player } from "./player";
 import {
   Coords,
   currentPixelSize,
@@ -12,8 +9,6 @@ import {
   translatePoint,
 } from "./utils";
 import config from "./config.json";
-import p5 from "p5";
-import { Tile } from "./tile";
 import { Erosion, FlowMap } from "./erosion";
 
 export enum objectType {
@@ -21,319 +16,240 @@ export enum objectType {
   interest = "INTEREST",
 }
 
-// export type Tile = {
-//   color: p5.Color;
-//   terrain: string;
-//   altitude: number;
-// };
-export class Map {
+export class Tile {
+  elevation: number;
+  moisture: number;
+  temperature: number;
+  terrain: string;
+
+  constructor(_elevation: number) {
+    this.elevation = _elevation;
+    this.moisture = 0;
+    this.temperature = 0;
+    this.terrain = "GRASS";
+  }
+}
+export class TerrainMap {
   x: number;
   y: number;
   height: number;
   width: number;
-  dayColor: string;
-  nightColor: string;
-  players: Player[];
-  areas = [] as Area[];
-  // s: p5;
-  time = 0; // 24 hour clock
-  timeChangeRate = 0.25;
-  day: boolean;
-  noise: HTMLCanvasElement;
-  // coords: { [key: string]: Tile };
   pixelSize: number;
-  tiles: { [key: string]: Tile };
-  translation: Coords = { x: 0, y: 0 };
-  noiseMap: { [key: string]: number };
-  mapArrays: { [key: string]: number }[] = [];
-  mapArrayIndex = 0;
+  map: Tile[];
   flowCount =
     config.EROSION_SIM_COUNT > 0
       ? config.EROSION_SIM_COUNT
       : config.EROSION_SIM_COUNT_MOD * config.MAP_SIZE;
-  totalFlowCount = 0;
-  // currentArray: number[];
 
-  showFlow: boolean;
-  flowMap: FlowMap[][];
-
-  constructor(
-    _x: number,
-    _y: number,
-    _height: number,
-    _width: number,
-    _dayColor: string,
-    _nightColor: string,
-    // _s: p5,
-    _players?: Player[],
-    _interests?: Interest[]
-  ) {
+  constructor(_x: number, _y: number, _height: number, _width: number) {
     this.x = _x;
     this.y = _y;
     this.height = _height;
     this.width = _width;
-    this.dayColor = _dayColor;
-    this.nightColor = _nightColor;
-    this.players = _players;
-    // this.s = _s;
-    this.noise = randomNoise(0, 0, this.width, this.height, 100);
-    this.tiles = {} as { [key: string]: Tile };
     this.pixelSize = config.PIXEL_SIZE;
-    this.showFlow = false;
-
-    // const player: Player = new Player(this.s, "#F7F3E3", this);
-    // const players = [player];
-    // this.players = players;
-
-    this.generate(true, true);
-
-    // set up player
-    // const tile = this.tiles[`0-0`];
-    // tile.contents.push(player);
-    // player.tile = tile;
-  }
-
-  tick() {
-    this.draw();
-  }
-
-  draw(redraw = true) {
-    // this.x += this.translation.x;
-    // this.y += this.translation.y;
-    // this.generate(false, redraw);
-    // const erodeColor = getComputedStyle(document.documentElement).getPropertyValue("--red-med");
-    // const depositColor = getComputedStyle(document.documentElement).getPropertyValue(
-    //   "--yellow-green-dark"
-    // );
-    // this.s.fill(
-    //   this.s.color(getComputedStyle(document.documentElement).getPropertyValue("--grass5"))
-    // );
-    // this.s.noStroke();
-    // this.s.rect(0, 0, this.s.width, this.s.height);
-    // const pixelsPerScreenRow = this.s.width / this.pixelSize;
-    // const pixelsPerScreenCol = this.s.height / this.pixelSize;
-    // for (let y = 0; y < pixelsPerScreenRow; y++) {
-    //   for (let x = 0; x < pixelsPerScreenCol; x++) {
-    //     this.tiles[`${this.x + x}-${this.y + y}`]?.draw({
-    //       x,
-    //       y,
-    //     });
-    //   }
-    // }
-    // // EROSION FLOW MAP DRAW CALLS
-    // if (this.showFlow) {
-    //   const increment = this.flowMap.length > 100 ? 50 : 1;
-    //   for (let i = 0; i < this.flowMap.length; i += increment) {
-    //     for (let j = 0; j < this.flowMap[i].length; j++) {
-    //       const flow = this.flowMap[i][j];
-    //       if (
-    //         flow.x > this.x &&
-    //         flow.x < this.x + this.s.width / this.pixelSize &&
-    //         flow.y > this.y &&
-    //         flow.y < this.y + this.s.height / this.pixelSize
-    //       ) {
-    //         const color =
-    //           // j === 0
-    //           // ? this.s.color("green")
-    //           // : this.s.color(flow.color * 255, flow.color * 255, flow.color * 255);
-    //           this.s.color("red");
-    //         this.s.fill(flow.depositing ? depositColor : erodeColor);
-    //         this.s.circle(
-    //           (flow.x - this.x) * this.pixelSize,
-    //           (flow.y - this.y) * this.pixelSize,
-    //           flow.sediment * 1000
-    //         );
-    //         this.s.fill(flow.depositing ? depositColor : erodeColor);
-    //         // this.s.circle(
-    //         //   (flow.x - this.x - 1) * this.pixelSize,
-    //         //   (flow.y - this.y) * this.pixelSize,
-    //         //   2
-    //         // );
-    //         // this.s.circle(
-    //         //   (flow.x - this.x - 1) * this.pixelSize,
-    //         //   (flow.y - this.y - 1) * this.pixelSize,
-    //         //   2
-    //         // );
-    //         // this.s.circle(
-    //         //   (flow.x - this.x) * this.pixelSize,
-    //         //   (flow.y - this.y - 1) * this.pixelSize,
-    //         //   2
-    //         // );
-    //       }
-    //     }
-    //   }
-    // }
-  }
-
-  generate(regenerateNoiseMap = false, regenerateFlow = false) {
-    const grassColorStart = getComputedStyle(document.documentElement).getPropertyValue(
-      "--green-dark"
-    );
-    const grassColorEnd = getComputedStyle(document.documentElement).getPropertyValue("--grass1");
-    const waterColorStart = getComputedStyle(document.documentElement).getPropertyValue(
-      "--blue-dark"
-    );
-    const waterColorEnd = getComputedStyle(document.documentElement).getPropertyValue(
-      "--blue-light"
-    );
-    const mountainColorStart = getComputedStyle(document.documentElement).getPropertyValue(
-      "--grey-dark"
-    );
-    const mountainColorEnd = getComputedStyle(document.documentElement).getPropertyValue(
-      "--grey-light"
-    );
-    const colorLevels = config.MAP_COLOUR_LEVELS;
-    const seaLevel = 0.25;
-    const random1 = randomInt(this.width / 2, this.width);
-    const random2 = randomInt(this.width / 2, this.width);
-    const noiseSize = 35;
-    // const noiseSize = config.NOISE_SIZE
-    if (regenerateNoiseMap) {
-      console.log("regenerating noise map");
-      this.noiseMap = {};
-      for (let y = 0; y < this.width; y += 1) {
-        for (let x = 0; x < this.height; x += 1) {
-          const radius = config.MAP_SIZE / 2;
-          const power = 2;
-          const fallOff = 0.4;
-
-          // noiseMod() applies a circular filter over the noise to darken the edges and makes an island
-          const noiseMod = (x: number, y: number, fallOff: number, power: number) => {
-            const dist = Math.pow(
-              Math.pow(x - radius, power) + Math.pow(y - radius, power),
-              1 / power
-            );
-            return dist > fallOff * radius ? 1 - (dist - fallOff * radius) / (radius * 1) : 1;
-          };
-
-          let noise =
-            this.perlinNoise(x * noiseSize, y * noiseSize, random1, random2)[0] *
-            noiseMod(x, y, fallOff, power);
-
-          // let testMod = Math.pow(
-          //   Math.pow(x - radius, power) + Math.pow(y - radius, power),
-          //   1 / power
-          // );
-          // if (testMod > fallOff * radius) {
-          //   testMod = (testMod - fallOff * radius) / (radius * 1);
-          // } else {
-          //   testMod = 0;
-          // }
-          // noise = testMod;
-
-          this.noiseMap[`${x}-${y}`] = noise;
-        }
-      }
-    }
-
-    if (regenerateFlow) {
-      console.log("regenerating flow map");
-      const e = new Erosion(this.width);
-      e.erosionRadius = 3;
-      // e.inertia = 0.05;
-      let erosion = e.erode(this.noiseMap, this.flowCount / 2, seaLevel);
-      e.erosionRadius = 2;
-      // e.inertia = 0.001;
-      erosion = e.erode(erosion.map, this.flowCount / 2, seaLevel);
-      this.totalFlowCount += this.flowCount;
-      this.mapArrays.push(erosion.map);
-      this.mapArrays.push(structuredClone(this.noiseMap));
-      console.log("number of flows:", this.totalFlowCount);
-
-      this.flowMap = erosion.flowMap;
-    }
-
-    for (let y = 0; y < this.width; y++) {
-      for (let x = 0; x < this.height; x++) {
-        const noise =
-          Math.floor(this.mapArrays[this.mapArrayIndex][`${x}-${y}`] * colorLevels) / colorLevels;
-        // const noise = this.mapArrays[this.mapArrayIndex][`${x}-${y}`];
-
-        // let color: p5.Color;
-        // color = this.s.color("black");
-        // color = this.s.color(noise * 255, noise * 255, noise * 255);
-        // if (Math.floor(noise * 500) % 25 === 0) {
-        //   color = this.s.color("white");
-        // }
-        // if (noise > 0.8) {
-        //   color = this.s.lerpColor(
-        //     this.s.color(mountainColorStart),
-        //     this.s.color(mountainColorEnd),
-        //     noise
-        //   );
-        // } else if (noise > seaLevel) {
-        //   color = this.s.lerpColor(
-        //     this.s.color(grassColorStart),
-        //     this.s.color(grassColorEnd),
-        //     noise
-        //   );
-        // } else {
-        //   color = this.s.lerpColor(
-        //     this.s.color(waterColorStart),
-        //     this.s.color(waterColorEnd),
-        //     noise
-        //   );
-        // }
-        // this.tiles[`${i - this.width / 2}-${j - this.height / 2}`] = {
-        //   color,
-        //   terrain: "grass",
-        //   altitude: 0,
-        // };
-        this.tiles[`${x}-${y}`] = new Tile(this, { x, y }, [noise, noise, noise], "grass", 0);
-      }
-    }
-  }
-
-  perlinNoise(x: number, y: number, random1: number, random2: number): number[] {
-    // let color = [0, 0, 0];
-    let color = 0;
-    const levels = 1;
-    const scale = 0.001;
-
-    // color +=
-    //   (this.s?.noise(((x + random1) * scale) / 8, ((y + random1) * scale) / 8) * 2) / (levels + 1);
-    for (let i = 0; i < levels; i++) {
-      // color += this.s?.noise(x * (scale / (i + 2)), y * (scale / (i + 2)));
-      color = Math.min(1, color);
-    }
-    return [color, color, color];
-  }
-
-  zoomIn() {
-    // const pixelsPerRow = this.s.width / this.pixelSize;
-    // const pixelsPerCol = this.s.height / this.pixelSize;
-    // this.x += Math.floor(pixelsPerRow / 4);
-    // this.y += Math.floor(pixelsPerCol / 4);
-    // this.pixelSize *= 2;
-  }
-
-  zoomOut() {
-    // const pixelsPerRow = this.s.width / this.pixelSize;
-    // const pixelsPerCol = this.s.height / this.pixelSize;
-    // this.x += Math.ceil(-pixelsPerRow / 2);
-    // this.y += Math.ceil(-pixelsPerCol / 2);
-    // this.pixelSize /= 2;
-  }
-
-  translate(coords: Coords) {
-    this.translation = coords;
-  }
-
-  switch() {
-    this.mapArrayIndex += 1;
-    if (this.mapArrayIndex === this.mapArrays.length) {
-      this.mapArrayIndex = 0;
-    }
+    this.map = [];
     this.generate();
   }
 
-  toggleFlowMap() {
-    this.showFlow = !this.showFlow;
+  generate() {
+    const noiseSize = 1;
+
+    const perlin = new PerlinNoise();
+    for (let y = 0; y < this.width; y += 1) {
+      for (let x = 0; x < this.height; x += 1) {
+        let noise = perlin.noise(x, y, config.MAP_SIZE);
+        this.map[y * this.width + x] = new Tile(noise);
+      }
+    }
+
+    // const e = new Erosion(this.width);
+
+    // e.erosionRadius = 3;
+    // let erosion = e.erode(this.map, this.flowCount / 2, seaLevel);
+
+    // e.erosionRadius = 2;
+    // erosion = e.erode(erosion.map, this.flowCount / 2, seaLevel);
+
+    // for (let y = 0; y < this.width; y++) {
+    //   for (let x = 0; x < this.height; x++) {
+    //     const noise = this.map[y * this.width + x];
+    //   }
+    // }
   }
 
-  static remove(object: Interest) {
-    (object as Interest).area.interests = (object as Interest).area.interests.filter(
-      (interest) => object !== interest
-    );
+  // perlinNoise(x: number, y: number, random1: number, random2: number): number[] {
+  //   // let color = [0, 0, 0];
+  //   let color = 0;
+  //   const levels = 2;
+  //   // const scale = 0.001;
+
+  //   // color +=
+  //   //   (this.s?.noise(((x + random1) * scale) / 8, ((y + random1) * scale) / 8) * 2) / (levels + 1);
+  //   for (let i = 0; i < levels; i++) {
+  //     // color += this.s?.noise(x * (scale / (i + 2)), y * (scale / (i + 2)));
+  //     color = Math.min(1, color);
+  //   }
+  //   return [color, color, color];
+  // }
+
+  // noiseMod() applies a circular filter over the noise to darken the edges and makes an island
+  noiseMod(x: number, y: number, fallOff: number, power: number, radius: number) {
+    const dist = Math.pow(Math.pow(x - radius, power) + Math.pow(y - radius, power), 1 / power);
+    return dist > fallOff * radius ? 1 - (dist - fallOff * radius) / (radius * 1) : 1;
+  }
+}
+
+// // Create a PerlinNoise class
+// class PerlinNoise {
+//   // Initialize an empty array to store random numbers
+//   private randomNumbers: number[] = [];
+//   width: number;
+//   height: number;
+
+//   constructor() {
+//     this.width = config.MAP_SIZE;
+//     this.height = config.MAP_SIZE;
+//   }
+
+//   // Define a random() function that generates random numbers
+//   random(x: number, y: number): number {
+//     // Convert the input coordinates to integers
+//     x = Math.floor(x);
+//     y = Math.floor(y);
+
+//     // Calculate the 1D array index for the given coordinates
+//     var index = x + y * this.width;
+
+//     // Check if a random number has already been generated for the given coordinates
+//     if (this.randomNumbers[index]) {
+//       // Return the previously generated random number
+//       return this.randomNumbers[index];
+//     } else {
+//       // Generate a new random number and store it in the array
+//       this.randomNumbers[index] = Math.random();
+//       return this.randomNumbers[index];
+//     }
+//   }
+
+//   // Define a noise() function that calculates the Perlin noise value for a given point
+//   noise(x: number, y: number, scalingFactor: number): number {
+//     // Calculate the integer coordinates of the input point, scaled by the scaling factor
+//     var x0 = Math.floor(x * scalingFactor);
+//     var y0 = Math.floor(y * scalingFactor);
+
+//     // Calculate the decimal part of the input coordinates, scaled by the scaling factor
+//     var dx = x * scalingFactor - x0;
+//     var dy = y * scalingFactor - y0;
+
+//     // Generate random numbers for the eight points that surround the input point
+//     var n00 = this.random(x0, y0);
+//     var n10 = this.random(x0 + 1, y0);
+//     var n01 = this.random(x0, y0 + 1);
+//     var n11 = this.random(x0 + 1, y0 + 1);
+
+//     // Interpolate the noise value for the input point
+//     var i1 = this.interpolate(n00, n10, dx);
+//     var i2 = this.interpolate(n01, n11, dx);
+//     var n0 = this.interpolate(i1, i2, dy);
+
+//     // // Combine multiple octaves of noise together
+//     // var n = this.octave(x, y, 8);
+
+//     // Return the combined noise value
+//     return n0;
+//   }
+
+//   // Define an octave() function that combines multiple octaves of noise
+//   octave(x: number, y: number, octaves: number): number {
+//     // Set the initial noise value to 0
+//     var n = 0;
+
+//     // Set the initial scaling factor to 1
+//     var scalingFactor = 1;
+
+//     // Set the initial weighting factor to 1
+//     var weightingFactor = 1;
+
+//     // Loop through each octave of noise
+//     for (var i = 0; i < octaves; i++) {
+//       // Calculate the noise value for the current octave, scaled by the scaling factor
+//       var octaveNoise = this.noise(x, y, scalingFactor) * weightingFactor;
+
+//       // Add the octave noise value to the total noise value
+//       n += octaveNoise;
+
+//       // Increase the scaling factor for the next octave
+//       scalingFactor *= 2;
+
+//       // Decrease the weighting factor for the next octave
+//       weightingFactor /= 2;
+//     }
+
+//     // Return the combined noise value
+//     return n;
+//   }
+
+//   // Define an interpolate() function that performs linear interpolation
+//   interpolate(a: number, b: number, x: number): number {
+//     return a * (1 - x) + b * x;
+//   }
+// }
+
+export class PerlinNoise {
+  gradients: { [key: string]: { x: number; y: number } };
+  nodesize: number;
+
+  constructor() {
+    this.gradients = {};
+  }
+
+  getOrCreateGradient(x: number, y: number) {
+    let key = `${x}-${y}`;
+    if (!this.gradients[key]?.x) {
+      this.gradients[key] = this.random_unit_vector();
+    }
+    return this.gradients[key];
+  }
+
+  noise(x: number, y: number, nodeSize: number) {
+    let x0 = x - (x % nodeSize);
+    let x1 = x0 + nodeSize;
+    let y0 = y - (y % nodeSize);
+    let y1 = y0 + nodeSize;
+    let dx = (x - x0) / nodeSize;
+    let dy = (y - y0) / nodeSize;
+    let d00 = this.dot_prod_grid(x0, y0, x, y);
+    let d10 = this.dot_prod_grid(x1, y0, x, y);
+    let d01 = this.dot_prod_grid(x0, y1, x, y);
+    let d11 = this.dot_prod_grid(x1, y1, x, y);
+
+    let top = this.interp(dx, d00, d10);
+    let bottom = this.interp(dx, d01, d11);
+    let value = (this.interp(dy, top, bottom) + 1) / 2;
+    return value;
+  }
+
+  random_unit_vector() {
+    let theta = Math.random() * 2 * Math.PI;
+    return { x: Math.cos(theta), y: Math.sin(theta) };
+  }
+
+  dot_prod_grid(x: number, y: number, vert_x: number, vert_y: number) {
+    // console.log("vert_xx", vert_x);
+    // console.log("vert_yy", vert_y);
+    var g_vect = this.getOrCreateGradient(x, y);
+    var d_vect = { x: x - vert_x, y: y - vert_y };
+    let g_length = Math.sqrt(g_vect.x ** 2 + g_vect.y ** 2);
+    let d_length = Math.sqrt(d_vect.x ** 2 + d_vect.y ** 2);
+    let value = d_vect.x * g_vect.x + d_vect.y * g_vect.y;
+    let normalized = value / (g_length * d_length);
+    return normalized;
+  }
+
+  smootherstep(x: number) {
+    return 6 * x ** 5 - 15 * x ** 4 + 10 * x ** 3;
+  }
+  interp(x: number, a: number, b: number) {
+    return a + this.smootherstep(x) * (b - a);
   }
 }

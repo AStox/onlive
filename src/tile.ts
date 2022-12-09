@@ -1,9 +1,9 @@
 import p5 from "p5";
 import { Coords } from "./utils";
-import { Map } from "./map";
+import { TerrainMap } from "./map";
 
 export class Tile {
-  map: Map;
+  map: TerrainMap;
   coords: Coords;
   color: number[];
   terrain: string;
@@ -11,7 +11,13 @@ export class Tile {
   contents: any[];
   viewCoords: Coords;
 
-  constructor(_map: Map, _coords: Coords, _color: number[], _terrain: string, _elevation: number) {
+  constructor(
+    _map: TerrainMap,
+    _coords: Coords,
+    _color: number[],
+    _terrain: string,
+    _elevation: number
+  ) {
     this.map = _map;
     this.coords = _coords;
     this.color = _color;
