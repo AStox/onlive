@@ -1,5 +1,6 @@
 import { randomFloat, randomInt } from "./utils";
 import config from "./config.json";
+import { Tile } from "./map";
 
 interface HeightAndGradient {
   height: number;
@@ -57,7 +58,7 @@ export class Erosion {
     }
   }
 
-  erode(map: { [key: string]: number }, numIterations = 1, seaLevel = 0) {
+  erode(map: Tile[], numIterations = 1, seaLevel = 0) {
     const originalMap = structuredClone(map);
     const mapSize = this.currentMapSize;
     this.flowMap = [];
@@ -74,7 +75,7 @@ export class Erosion {
       for (let lifetime = 0; lifetime < this.maxDropletLifetime; lifetime++) {
         let nodeX = posX;
         let nodeY = posY;
-        let dropletIndex = `${nodeX}-${nodeY}`;
+        let dropletIndex = Math.floor(nodeX) + Math.floor(nodeY) * mapSize;
         // Calculate droplet's height and direction of flow with bilinear interpolation of surrounding heights
         let heightAndGradient = this.CalculateHeightAndGradient(map, mapSize, posX, posY);
 
@@ -173,7 +174,7 @@ export class Erosion {
 
                 if (coordX >= 0 && coordX < mapSize && coordY >= 0 && coordY < mapSize) {
                   let weight = 1 - Math.sqrt(sqrDst) / radius || 0;
-                  const offset = `${coordX}-${coordY}`;
+                  const offset = coordX + coordY * mapSize;
                   // Use erosion brush to erode from all nodes inside the droplet's erosion radius
                   // (1 / (2 * (radius - 0.3333333333333333))) is used to normalize the amount eroded/deposited to 1;
 
@@ -183,10 +184,11 @@ export class Erosion {
                   // Math.min(Math.abs(originalMap[offset] - map[offset]), this.maxDisplacement) /
                   //   this.maxDisplacement);
 
-                  map[offset] =
-                    map[offset] + deltaSediment > map[dropletIndex] + amountToDeposit
-                      ? map[offset]
-                      : map[offset] + deltaSediment;
+                  map[offset].elevation =
+                    map[offset].elevation + deltaSediment >
+                    map[dropletIndex].elevation + amountToDeposit
+                      ? map[offset].elevation
+                      : map[offset].elevation + deltaSediment;
 
                   sediment -= Math.max(deltaSediment, 0);
                 }
@@ -224,7 +226,7 @@ export class Erosion {
 
                 if (coordX >= 0 && coordX < mapSize && coordY >= 0 && coordY < mapSize) {
                   let weight = 1 - Math.sqrt(sqrDst) / radius || 0;
-                  const offset = `${coordX}-${coordY}`;
+                  const offset = coordX + coordY * mapSize;
                   // Use erosion brush to erode from all nodes inside the droplet's erosion radius
                   // (1 / (2 * (radius - 0.3333333333333333))) is used to normalize the amount eroded/deposited to 1;
                   let deltaSediment =
@@ -239,7 +241,7 @@ export class Erosion {
                     console.log("weight", weight);
                     console.log("deltaSediment", deltaSediment);
                   }
-                  map[offset] -= deltaSediment;
+                  map[offset].elevation -= deltaSediment;
                   sediment += deltaSediment;
                 }
               }
@@ -264,12 +266,7 @@ export class Erosion {
     return { map: map, flowMap: this.flowMap };
   }
 
-  CalculateHeightAndGradient(
-    nodes: { [key: string]: number },
-    mapSize: number,
-    posX: number,
-    posY: number
-  ) {
+  CalculateHeightAndGradient(nodes: Tile[], mapSize: number, posX: number, posY: number) {
     let coordX = posX;
     let coordY = posY;
 
@@ -278,15 +275,11 @@ export class Erosion {
     let y = posY - coordY;
 
     // Calculate heights of the four nodes of the droplet's cell
-    let heightSE = nodes[`${Math.floor(coordX) + 1}-${Math.floor(coordY) + 1}`];
-    let heightSW = nodes[`${Math.floor(coordX) - 1}-${Math.floor(coordY) + 1}`];
-    let heightNE = nodes[`${Math.floor(coordX) + 1}-${Math.floor(coordY) - 1}`];
-    let heightNW = nodes[`${Math.floor(coordX) - 1}-${Math.floor(coordY) - 1}`];
+    let heightSE = nodes[Math.floor(coordX) + 1 + mapSize * (Math.floor(coordY) + 1)];
+    let heightSW = nodes[Math.floor(coordX) - 1 + mapSize * (Math.floor(coordY) + 1)];
+    let heightNE = nodes[Math.floor(coordX) + 1 + mapSize * (Math.floor(coordY) - 1)];
+    let heightNW = nodes[Math.floor(coordX) - 1 + mapSize * (Math.floor(coordY) - 1)];
     if (config.DEBUG) {
-      console.log("SE", `${Math.floor(coordX) + 1}-${Math.floor(coordY) + 1}`);
-      console.log("SW", `${Math.floor(coordX) - 1}-${Math.floor(coordY) + 1}`);
-      console.log("NE", `${Math.floor(coordX) + 1}-${Math.floor(coordY) - 1}`);
-      console.log("NW", `${Math.floor(coordX) - 1}-${Math.floor(coordY) - 1}`);
       console.log("coordX", coordX);
       console.log("coordY", coordY);
       console.log("heightNW", heightNW);
@@ -296,11 +289,16 @@ export class Erosion {
     }
 
     // Calculate droplet's direction of flow with bilinear interpolation of height difference along the edges
-    let gradientX = (heightNE - heightNW) * 0.5 + (heightSE - heightSW) * 0.5;
-    let gradientY = (heightSW - heightNW) * 0.5 + (heightSE - heightNE) * 0.5;
+    let gradientX =
+      (heightNE.elevation - heightNW.elevation) * 0.5 +
+      (heightSE.elevation - heightSW.elevation) * 0.5;
+    let gradientY =
+      (heightSW.elevation - heightNW.elevation) * 0.5 +
+      (heightSE.elevation - heightNE.elevation) * 0.5;
 
     // Calculate height with bilinear interpolation of the heights of the nodes of the cell
-    let height = (heightSE + heightSW + heightNE + heightNW) / 4;
+    let height =
+      (heightSE.elevation + heightSW.elevation + heightNE.elevation + heightNW.elevation) / 4;
     let output: HeightAndGradient = { height: height, gradientX: gradientX, gradientY: gradientY };
     return output;
   }
