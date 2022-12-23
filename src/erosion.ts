@@ -30,10 +30,7 @@ export class Erosion {
   initialWaterVolume = 1;
   initialSpeed = 1;
 
-  speedMod = 1;
   erosionHeightMod = 0.01;
-  maxErode = 0.005;
-  maxDisplacement = 0.01;
 
   // Indices and weights of erosion brush precomputed for every node
   erosionBrushIndices: number[][];
@@ -92,8 +89,8 @@ export class Erosion {
           dirX /= len;
           dirY /= len;
         }
-        posX += dirX * this.speedMod;
-        posY += dirY * this.speedMod;
+        posX += dirX;
+        posY += dirY;
 
         // Stop simulating droplet if it's not moving or has flowed over edge of map
         if (

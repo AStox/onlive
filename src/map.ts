@@ -28,8 +28,8 @@ export class TerrainMap {
   pixelSize: number;
   map: Tile[];
   flowCount =
-    config.EROSION_SIM_COUNT > 0
-      ? config.EROSION_SIM_COUNT
+    config.EROSION_ITERATIONS > 0
+      ? config.EROSION_ITERATIONS
       : config.EROSION_SIM_COUNT_MOD * config.MAP_SIZE;
 
   constructor(_x: number, _y: number, _height: number, _width: number) {
