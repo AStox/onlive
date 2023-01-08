@@ -3,8 +3,6 @@ import { Coords } from "./utils";
 import config from "./config.json";
 import { Renderer } from "./renderer";
 
-const CANVAS_SIZE = config.CANVAS_SIZE;
-const TRANSLATTION_AMOUNT = config.TRANSLATTION_AMOUNT;
 // const canvas = document.getElementById("myCanvas") as HTMLCanvasElement;
 // const noise = document.getElementById("noise") as HTMLCanvasElement;
 // noise.setAttribute("width", `${CANVAS_SIZE}`);

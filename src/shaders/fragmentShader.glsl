@@ -82,7 +82,7 @@ void main() {
     // Generate perlin noise at the current pixel
     float noise = 0.0;
     // Add some noise octaves in a for loop
-    for (float i = 0.0; i < 5.0; i++) {
+    for (float i = 0.0; i < 3.0; i++) {
         noise += snoise(uv * pow(2.0,i)) * pow(0.5,i+1.0);
     }
     noise = (noise+1.0)/2.0;
