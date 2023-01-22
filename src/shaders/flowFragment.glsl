@@ -74,9 +74,7 @@ void main() {
     // Set the output color to black
     vec2 uv = (gl_FragCoord.xy / u_resolution);
     vec4 color = texture2D(noiseTexture, uv);
-    // color = vec4(gl_FragCoord.xy / u_resolution, 0.0, 1.0);
 
-    // Loop over the specified number of iterations
     // Create water droplet at random point on map
     // if randomPos is negative, use the colour of 0,0 as the position
     float startX = 0.0;
@@ -97,89 +95,70 @@ void main() {
     float water = initialWaterVolume;
     float sediment = 0.0;
 
-    // Loop over the lifetime of the droplet
-    // for (int lifetime = 0; lifetime < maxDropletLifetime; lifetime++) {
-        // int nodeX = int(posX);
-        // int nodeY = int(posY);
-        // int dropletIndex = nodeX + nodeY * int(mapSize.x);
-
-        // Calculate droplet's height and direction of flow with bilinear interpolation of surrounding heights
-        float startDist = 5.0;
-        vec4 heightAndGradient;
-        bool flatGrad = true;
-        for (int i = 0; i < 10; i++) {
-            heightAndGradient = CalculateHeightAndGradient(noiseTexture, mapSize, posX, posY, startDist);
-            if (heightAndGradient.y == 0.0 && heightAndGradient.z == 0.0) {
-                startDist += 1.0 + heightAndGradient.x * 50.0;
-            } else {
-                flatGrad = false;
-                break;
-            }
-        }
-        float height = heightAndGradient.x;
-        float gradientX = heightAndGradient.y;
-        float gradientY = heightAndGradient.z;
-
-        // Update the droplet's direction and position (move position 1 unit regardless of speed)
-        dirX = dirX * (inertia * speed) - gradientX * (1.0 - inertia * speed);
-        dirY = dirY * (inertia * speed) - gradientY * (1.0 - inertia * speed);
-
-        // Normalize direction
-        float len = sqrt(dirX * dirX + dirY * dirY);
-        if (len != 0.0) {
-            dirX = (dirX * 5.0) / (len * u_resolution.x);
-            dirY = (dirY * 5.0) / (len * u_resolution.y);
-        }
-        posX += dirX;
-        posY += dirY;
-
-        // Stop simulating droplet if it's not moving or has flowed over edge of map
-        // if ((dirX == 0.0 && dirY == 0.0) || posX < 0.0 || posX > u_resolution.x - 1.0 || posY < 0.0 || posY > u_resolution.y - 1.0) {
-        // if pos
-        //     break;
-        // }
-        
-
-        // Calculate the droplet's carrying capacity
-        float sedimentCapacity = max(water * sedimentCapacityFactor, minSedimentCapacity);
-
-        // Calculate the amount of sediment that the droplet will pick up or drop off
-        float deltaSediment = 0.0;
-        if (height < seaLevel) {
-            // Droplet is in water, so it picks up sediment
-            deltaSediment = (sedimentCapacity - sediment) * erodeSpeed;
-            deltaSediment = min(deltaSediment, (seaLevel - height) * sedimentCapacity * erosionHeightMod);
-            sediment += deltaSediment;
+    // Calculate droplet's height and direction of flow with bilinear interpolation of surrounding heights
+    float startDist = 5.0;
+    vec4 heightAndGradient;
+    bool flatGrad = true;
+    for (int i = 0; i < 10; i++) {
+        heightAndGradient = CalculateHeightAndGradient(noiseTexture, mapSize, posX, posY, startDist);
+        if (heightAndGradient.y == 0.0 && heightAndGradient.z == 0.0) {
+            startDist += 1.0 + heightAndGradient.x * 50.0;
         } else {
-            // Droplet is not in water, so it drops off sediment
-            deltaSediment = sediment * depositSpeed;
-            sediment -= deltaSediment;
+            flatGrad = false;
+            break;
         }
+    }
+    float height = heightAndGradient.x;
+    float gradientX = heightAndGradient.y;
+    float gradientY = heightAndGradient.z;
 
-        // Update the height of the current node based on the sediment being picked up or dropped off
-        float deltaHeight = deltaSediment * (water / sedimentCapacity);
-        height += deltaHeight;
+    // Update the droplet's direction and position (move position 1 unit regardless of speed)
+    dirX = dirX * (inertia * speed) - gradientX * (1.0 - inertia * speed);
+    dirY = dirY * (inertia * speed) - gradientY * (1.0 - inertia * speed);
 
-        // Update the water volume of the droplet
-        water -= deltaSediment * (1.0 / sedimentCapacity);
+    // Normalize direction
+    float len = sqrt(dirX * dirX + dirY * dirY);
+    if (len != 0.0) {
+        dirX = (dirX * 5.0) / (len * u_resolution.x);
+        dirY = (dirY * 5.0) / (len * u_resolution.y);
+    }
+    posX += dirX;
+    posY += dirY;
 
-        // Evaporate some of the water from the droplet
-        water *= (1.0 - evaporateSpeed);
+    // Calculate the droplet's carrying capacity
+    float sedimentCapacity = max(water * sedimentCapacityFactor, minSedimentCapacity);
 
-        // Increase the speed of the droplet based on the slope of the terrain
-        speed += sqrt(gradientX * gradientX + gradientY * gradientY) * gravity * water * sedimentCapacity;
+    // Calculate the amount of sediment that the droplet will pick up or drop off
+    float deltaSediment = 0.0;
+    if (height < seaLevel) {
+        // Droplet is in water, so it picks up sediment
+        deltaSediment = (sedimentCapacity - sediment) * erodeSpeed;
+        deltaSediment = min(deltaSediment, (seaLevel - height) * sedimentCapacity * erosionHeightMod);
+        sediment += deltaSediment;
+    } else {
+        // Droplet is not in water, so it drops off sediment
+        deltaSediment = sediment * depositSpeed;
+        sediment -= deltaSediment;
+    }
 
-        // Update the output color to show the height of the current node
-        // if (gl_FragCoord.x == startX && gl_FragCoord.y == startY) { 
-        if (u_renderNoise  == 0) {
-            if (dist(gl_FragCoord.xy / u_resolution, vec2(startX, startY)) < 0.1) {
-                vec2 uv = (gl_FragCoord.xy / u_resolution);
-                color = texture2D(noiseTexture, uv);
-            } else {
-                color = vec4(posX, posY, 0.0, 1.0);
-            }
-        }
+    // Update the height of the current node based on the sediment being picked up or dropped off
+    float deltaHeight = deltaSediment * (water / sedimentCapacity);
+    height += deltaHeight;
 
+    // Update the water volume of the droplet
+    water -= deltaSediment * (1.0 / sedimentCapacity);
 
+    // Evaporate some of the water from the droplet
+    water *= (1.0 - evaporateSpeed);
+
+    // Increase the speed of the droplet based on the slope of the terrain
+    speed += sqrt(gradientX * gradientX + gradientY * gradientY) * gravity * water * sedimentCapacity;
+
+    if (dist(gl_FragCoord.xy / u_resolution, vec2(startX, startY)) < 0.1) {
+        vec2 uv = (gl_FragCoord.xy / u_resolution);
+        color = texture2D(noiseTexture, uv);
+    } else {
+        color = vec4(posX, posY, 0.0, 1.0);
+    }
     gl_FragColor = color;
 }

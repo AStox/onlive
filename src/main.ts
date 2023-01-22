@@ -36,6 +36,7 @@ const map = new TerrainMap(0, 0, 1, 1);
 const renderer = new Renderer(config.CANVAS_SIZE, config.CANVAS_SIZE, map);
 // let noise: Uint8Array | null = null;
 if (renderer.gl) {
+  console.log("RUNNING");
   renderer.run();
   // setInterval(() => {
   // }, 420);
