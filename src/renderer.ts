@@ -1,5 +1,6 @@
 import { TerrainMap } from "./map";
 import config from "./config.json";
+import { Recorder } from "./recorder";
 
 export class Renderer {
   canvas: HTMLCanvasElement;
@@ -8,8 +9,11 @@ export class Renderer {
   vertex = require("./shaders/vertexShader.glsl");
   noiseFragment = require("./shaders/noiseFragment.glsl");
   flowFragment = require("./shaders/flowFragment.glsl");
+  flowStartFragment = require("./shaders/flowStartFragment.glsl");
   paintNoiseFragment = require("./shaders/paintNoiseFragment.glsl");
   debugFragment = require("./shaders/debugFragment.glsl");
+  iteration = 0;
+  flowResolution = 50;
 
   constructor(width: number, height: number, map: TerrainMap) {
     this.canvas = document.createElement("canvas");
@@ -21,6 +25,7 @@ export class Renderer {
   }
 
   run() {
+    // new Recorder(this.canvas).record();
     const gl = this.gl;
     gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
     gl.clearColor(0, 0, 0, 0);
@@ -30,14 +35,14 @@ export class Renderer {
     let noise: WebGLTexture = null;
     let flow: WebGLTexture = null;
     let alteredNoise: WebGLTexture = null;
-    noise = this.renderNoise(fbo);
+    noise = this.renderNoise();
 
     const randomX = Math.random() * gl.canvas.width;
     const randomY = Math.random() * gl.canvas.height;
     this.erode(noise, flow, alteredNoise, randomX, randomY);
   }
 
-  renderNoise(fbo: WebGLFramebuffer) {
+  renderNoise() {
     const gl = this.gl;
 
     let vertexShader = this.createShader(gl, gl.VERTEX_SHADER, this.vertex);
@@ -46,18 +51,13 @@ export class Renderer {
     var program = this.createProgram(gl, vertexShader, fragmentShader);
     gl.useProgram(program);
 
+    this.setupVertexShader(gl, program);
+
     var resolutionUniformLocation = gl.getUniformLocation(program, "u_resolution");
     gl.uniform2f(resolutionUniformLocation, gl.canvas.width, gl.canvas.height);
 
-    var positionBuffer = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
-    var positionAttributeLocation = gl.getAttribLocation(program, "a_position");
-    gl.enableVertexAttribArray(positionAttributeLocation);
-    gl.vertexAttribPointer(positionAttributeLocation, 2, gl.FLOAT, false, 0, 0);
-    let vertexArray = this.setRectangle(0, 0, this.canvas.width, this.canvas.height);
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertexArray), gl.STATIC_DRAW);
-
     // Render to a framebuffer
+    let fbo = gl.createFramebuffer();
     gl.bindFramebuffer(gl.FRAMEBUFFER, fbo);
     const noiseTexture = gl.createTexture();
     gl.activeTexture(gl.TEXTURE0);
@@ -91,7 +91,52 @@ export class Renderer {
     return noiseTexture;
   }
 
-  renderFlow(noise: WebGLTexture, flow: WebGLTexture, randomX: number, randomY: number) {
+  renderFlowStart() {
+    // renders the initial state for each droplet
+    const gl = this.gl;
+    let vertexShader = this.createShader(gl, gl.VERTEX_SHADER, this.vertex);
+    let fragmentShader = this.createShader(gl, gl.FRAGMENT_SHADER, this.flowStartFragment);
+
+    var program = this.createProgram(gl, vertexShader, fragmentShader);
+    gl.useProgram(program);
+
+    this.setupVertexShader(gl, program);
+
+    var resolutionUniformLocation = gl.getUniformLocation(program, "u_resolution");
+    gl.uniform2f(resolutionUniformLocation, this.flowResolution, this.flowResolution);
+
+    var granularityUniformLocation = gl.getUniformLocation(program, "u_granularity");
+    gl.uniform1f(granularityUniformLocation, gl.canvas.width);
+
+    let fbo = gl.createFramebuffer();
+    gl.bindFramebuffer(gl.FRAMEBUFFER, fbo);
+    const renderTexture = gl.createTexture();
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, renderTexture);
+    gl.texImage2D(
+      gl.TEXTURE_2D,
+      0,
+      gl.RGBA,
+      gl.canvas.width,
+      gl.canvas.height,
+      0,
+      gl.RGBA,
+      gl.UNSIGNED_BYTE,
+      null
+    );
+    gl.viewport(0, 0, this.flowResolution, this.flowResolution);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, renderTexture, 0);
+
+    gl.drawArrays(gl.TRIANGLES, 0, 6);
+
+    return renderTexture;
+  }
+
+  renderFlow(noise: WebGLTexture, flow: WebGLTexture) {
     const gl = this.gl;
     let vertexShader = this.createShader(gl, gl.VERTEX_SHADER, this.vertex);
     let fragmentShader = this.createShader(gl, gl.FRAGMENT_SHADER, this.flowFragment);
@@ -101,8 +146,11 @@ export class Renderer {
 
     this.setupVertexShader(gl, program);
 
-    var randomPosUniformLocation = gl.getUniformLocation(program, "randomPos");
-    gl.uniform2f(randomPosUniformLocation, randomX, randomY);
+    // var randomPosUniformLocation = gl.getUniformLocation(program, "randomPos");
+    // gl.uniform2f(randomPosUniformLocation, randomX, randomY);
+
+    var resolutionUniformLocation = gl.getUniformLocation(program, "u_resolution");
+    gl.uniform2f(resolutionUniformLocation, gl.canvas.width, gl.canvas.height);
 
     var mapSizeUniformLocation = gl.getUniformLocation(program, "mapSize");
     gl.uniform2f(mapSizeUniformLocation, this.map.width, this.map.height);
@@ -116,33 +164,9 @@ export class Renderer {
     const noiseLocation = gl.getUniformLocation(program, "noiseTexture");
     gl.uniform1i(noiseLocation, 0);
 
-    if (randomX >= 0) {
-      console.log("creating new blank flow texture");
-      flow = gl.createTexture();
-      gl.activeTexture(gl.TEXTURE1);
-      gl.bindTexture(gl.TEXTURE_2D, flow);
-      gl.texImage2D(
-        gl.TEXTURE_2D,
-        0,
-        gl.RGBA,
-        gl.canvas.width,
-        gl.canvas.height,
-        0,
-        gl.RGBA,
-        gl.UNSIGNED_BYTE,
-        null
-      );
-      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-      gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, flow, 0);
-    } else {
-      console.log("using existing flow texture");
-      gl.bindFramebuffer(gl.FRAMEBUFFER, fbo);
-      gl.activeTexture(gl.TEXTURE1);
-      gl.bindTexture(gl.TEXTURE_2D, flow);
-    }
+    console.log("using existing flow texture");
+    gl.activeTexture(gl.TEXTURE1);
+    gl.bindTexture(gl.TEXTURE_2D, flow);
 
     const flowLocation = gl.getUniformLocation(program, "flowTexture");
     gl.uniform1i(flowLocation, 1);
@@ -190,8 +214,14 @@ export class Renderer {
     gl.activeTexture(gl.TEXTURE0);
     gl.bindTexture(gl.TEXTURE_2D, noise);
 
+    const resolutionLocation = gl.getUniformLocation(program, "u_resolution");
+    gl.uniform2f(resolutionLocation, gl.canvas.width, gl.canvas.height);
+
     const noiseLocation = gl.getUniformLocation(program, "noiseTexture");
     gl.uniform1i(noiseLocation, 0);
+
+    const flowResolutionLocation = gl.getUniformLocation(program, "u_flowResolution");
+    gl.uniform2f(flowResolutionLocation, this.flowResolution, this.flowResolution);
 
     gl.activeTexture(gl.TEXTURE1);
     gl.bindTexture(gl.TEXTURE_2D, flow);
@@ -228,6 +258,8 @@ export class Renderer {
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
     gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, renderTexture, 0);
+
+    gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
 
     gl.drawArrays(gl.TRIANGLES, 0, 6);
 
@@ -269,11 +301,21 @@ export class Renderer {
     // noise = this.renderNoise();
     // let newFlow: WebGLTexture | null;
     // let newAlteredNoiseTexture: WebGLTexture | null;
-    const newFlow = this.renderFlow(noise, flow, randomX, randomY);
+    if (this.iteration >= 20) {
+      return;
+    }
+    if (this.iteration == 0) {
+      console.log("Render flow start");
+      flow = this.renderFlowStart();
+    }
+    const newFlow = this.renderFlow(noise, flow);
     const newAlteredNoiseTexture = this.renderPaintedNoise(noise, newFlow, alteredNoise);
     this.renderDebug(newAlteredNoiseTexture);
 
-    requestAnimationFrame(() => this.erode(noise, newFlow, newAlteredNoiseTexture, -1, -1));
+    requestAnimationFrame(() =>
+      setTimeout(() => this.erode(noise, newFlow, newAlteredNoiseTexture, -1, -1), 1000 / 24)
+    );
+    this.iteration++;
   }
 
   setupVertexShader(gl: WebGLRenderingContext, program: WebGLProgram) {

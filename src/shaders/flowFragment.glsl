@@ -73,19 +73,22 @@ float dist(vec2 vect1, vec2 vect2) {
 void main() {
     // Set the output color to black
     vec2 uv = (gl_FragCoord.xy / u_resolution);
-    vec4 color = texture2D(noiseTexture, uv);
+    // vec4 color = texture2D(noiseTexture, uv);
 
     // Create water droplet at random point on map
     // if randomPos is negative, use the colour of 0,0 as the position
     float startX = 0.0;
     float startY = 0.0;
-    if (randomPos.x < 0.0 ) {
-        startX = texture2D(flowTexture, vec2(0.0,0.0)).r;
-        startY = texture2D(flowTexture, vec2(0.0,0.0)).g;
-    } else {
-        startX = randomPos.x / u_resolution.x;
-        startY = randomPos.y / u_resolution.y;
-    }
+
+    // if (texture2D(flowTexture, vec2(1.0,1.0)).r > 0.0) {
+    startX = texture2D(flowTexture, uv).r;
+    startY = texture2D(flowTexture, uv).g;
+    // } else {
+    //     startX = gl_FragCoord.x / u_resolution.x;
+    //     startY = gl_FragCoord.y / u_resolution.y;
+        // startX = randomPos.x;
+        // startY = randomPos.y;
+    // }
     float posX = startX;
     float posY = startY;
 
@@ -154,11 +157,15 @@ void main() {
     // Increase the speed of the droplet based on the slope of the terrain
     speed += sqrt(gradientX * gradientX + gradientY * gradientY) * gravity * water * sedimentCapacity;
 
-    if (dist(gl_FragCoord.xy / u_resolution, vec2(startX, startY)) < 0.1) {
-        vec2 uv = (gl_FragCoord.xy / u_resolution);
-        color = texture2D(noiseTexture, uv);
-    } else {
-        color = vec4(posX, posY, 0.0, 1.0);
-    }
+    // if (dist(gl_FragCoord.xy / u_resolution, vec2(startX, startY)) < 0.1) {
+    //     vec2 uv = (gl_FragCoord.xy / u_resolution);
+    //     // color = texture2D(noiseTexture, uv);
+    // } else {
+    //     color = vec4(posX, posY, 0.0, 1.0);
+    // }
+    // startX = gl_FragCoord.x / u_resolution.x;
+    // startY = gl_FragCoord.y / u_resolution.y;
+    vec4 color = vec4(posX, posY, 0.0, 1.0);
+    // color = vec4(startX, startY, 0.0, 1.0);
     gl_FragColor = color;
 }
