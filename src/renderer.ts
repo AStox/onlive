@@ -14,7 +14,7 @@ export class Renderer {
   debugFragment = require("./shaders/debugFragment.glsl");
   iteration = 0;
   maxIterations = 40;
-  flowResolution = 5;
+  flowResolution = 50;
 
   constructor(width: number, height: number, map: TerrainMap) {
     this.canvas = document.createElement("canvas");

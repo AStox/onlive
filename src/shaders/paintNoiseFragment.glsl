@@ -31,27 +31,8 @@ void main() {
             if (radius < maxRadius) {
                 float a = pow(radius/maxRadius, 2.0);
                 color = color + ((vec4(a, a, a, 1.0) - vec4(1.0)) * amount);
-                color = vec4(flowUV, 0.0, 1.0);
             }
-            // color = vec4(pos, 0.0, 1.0);
-            // color = texture2D(flowTexture, uv / ratio);
         }
     }
-    // float posX = uv * u_flowResolution.x;
-    // float posY = uv * u_flowResolution.y;
-
-
-
-    // // float posX = texture2D(flowTexture, uv).r;
-    // // float posY = texture2D(flowTexture, uv).g;
-
-    // float radius = dist(gl_FragCoord.xy / u_resolution, vec2(posX, posY));
-    // float maxRadius = 0.01;
-    // float amount = 0.05;
-    // if (radius < maxRadius) {
-    //     float a = pow(radius/maxRadius, 2.0);
-    //     color = color + ((vec4(a, a, a, 1.0) - vec4(1.0)) * amount);
-    // }
-    // color = vec4(, 0.0, 1.0);
     gl_FragColor = color;
 }
