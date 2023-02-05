@@ -13,7 +13,8 @@ export class Renderer {
   paintNoiseFragment = require("./shaders/paintNoiseFragment.glsl");
   debugFragment = require("./shaders/debugFragment.glsl");
   iteration = 0;
-  flowResolution = 50;
+  maxIterations = 40;
+  flowResolution = 5;
 
   constructor(width: number, height: number, map: TerrainMap) {
     this.canvas = document.createElement("canvas");
@@ -301,7 +302,7 @@ export class Renderer {
     // noise = this.renderNoise();
     // let newFlow: WebGLTexture | null;
     // let newAlteredNoiseTexture: WebGLTexture | null;
-    if (this.iteration >= 20) {
+    if (this.iteration >= this.maxIterations) {
       return;
     }
     if (this.iteration == 0) {

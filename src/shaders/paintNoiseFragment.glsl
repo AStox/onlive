@@ -19,18 +19,19 @@ void main() {
 
     // for every pixel of the flowTexture, check if the distance between that pixel and the current pixel is less than a certain amount
     for (float i = 0.0; i < maxFlowResolution; i++) {
-        if (i > u_flowResolution.x) break;
+        if (i >= u_flowResolution.x) break;
         for (float j = 0.0; j < maxFlowResolution; j++) {
-            if (j > u_flowResolution.y) break;
+            if (j >= u_flowResolution.y) break;
 
             vec2 flowUV = vec2(i / u_flowResolution.x, j / u_flowResolution.y);
-            vec2 pos = texture2D(flowTexture, flowUV / ratio).rg/ratio;
-            float radius = dist(uv, pos * ratio);
-            float maxRadius = 0.001;
-            float amount = 0.05;
+            vec2 pos = texture2D(flowTexture, flowUV / ratio).rg;
+            float radius = dist(uv, pos);
+            float maxRadius = 0.005;
+            float amount = 0.02;
             if (radius < maxRadius) {
                 float a = pow(radius/maxRadius, 2.0);
                 color = color + ((vec4(a, a, a, 1.0) - vec4(1.0)) * amount);
+                color = vec4(flowUV, 0.0, 1.0);
             }
             // color = vec4(pos, 0.0, 1.0);
             // color = texture2D(flowTexture, uv / ratio);
@@ -51,5 +52,6 @@ void main() {
     //     float a = pow(radius/maxRadius, 2.0);
     //     color = color + ((vec4(a, a, a, 1.0) - vec4(1.0)) * amount);
     // }
+    // color = vec4(, 0.0, 1.0);
     gl_FragColor = color;
 }
