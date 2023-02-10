@@ -15,7 +15,7 @@ float dist(vec2 vect1, vec2 vect2) {
 void main() {
     vec2 uv = (gl_FragCoord.xy / u_resolution);
     vec4 color = texture2D(alteredNoiseTexture, uv);
-    vec2 ratio = u_resolution / u_flowResolution;
+    vec2 ratio = u_flowResolution / u_resolution;
 
     // for every pixel of the flowTexture, check if the distance between that pixel and the current pixel is less than a certain amount
     for (float i = 0.0; i < maxFlowResolution; i++) {
@@ -23,8 +23,11 @@ void main() {
         for (float j = 0.0; j < maxFlowResolution; j++) {
             if (j >= u_flowResolution.y) break;
 
-            vec2 flowUV = vec2(i / u_flowResolution.x, j / u_flowResolution.y);
-            vec2 pos = texture2D(flowTexture, flowUV / ratio).rg;
+            vec2 flowUV = vec2(i / u_flowResolution.x, j / u_flowResolution.y);     // from 0 to 1
+            // from 0 to 1, reads the R & G channels from the flow texture
+            // reads the R & G channels from the flow texture.
+            // flowUV is in flow coordinates, so we need to convert it to the uv coords of the render texture using ratio
+            vec2 pos = texture2D(flowTexture, flowUV * ratio).rg;
             float radius = dist(uv, pos);
             float maxRadius = 0.005;
             float amount = 0.02;

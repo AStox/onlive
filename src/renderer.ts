@@ -14,7 +14,7 @@ export class Renderer {
   debugFragment = require("./shaders/debugFragment.glsl");
   iteration = 0;
   maxIterations = 40;
-  flowResolution = 50;
+  flowResolution = config.FLOW_RESOLUTION;
 
   constructor(width: number, height: number, map: TerrainMap) {
     this.canvas = document.createElement("canvas");
@@ -309,8 +309,9 @@ export class Renderer {
       console.log("Render flow start");
       flow = this.renderFlowStart();
     }
+    let newAlteredNoiseTexture: WebGLTexture;
     const newFlow = this.renderFlow(noise, flow);
-    const newAlteredNoiseTexture = this.renderPaintedNoise(noise, newFlow, alteredNoise);
+    newAlteredNoiseTexture = this.renderPaintedNoise(noise, newFlow, alteredNoise);
     this.renderDebug(newAlteredNoiseTexture);
 
     requestAnimationFrame(() =>

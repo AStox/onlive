@@ -11,5 +11,7 @@
 
   "TRANSLATTION_AMOUNT": 5,
   "MAP_COLOUR_LEVELS": 25,
-  "DEBUG": false
+  "DEBUG": false,
+
+  "FLOW_RESOLUTION": 10
 }
