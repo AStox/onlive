@@ -28,11 +28,8 @@ void main() {
     vec2 seed = uv / num + num/2.0;
     // uv = floor(uv);
     // uv = uv / u_granularity;
-    vec4 color = vec4(uv.x + (rand(seed) * 2.0 - 1.0) * factor, uv.y + (rand(vec2(1.0) - seed) * 2.0 - 1.0) * factor, 0.0, 1.0);
-    // float num = 1.0;
-
-    // blue doesnt work???
-    // vec4 color = vec4(0.0, 0.0, 1.0, 1.0);
+    // vec4 color = vec4(uv.x + (rand(seed) * 2.0 - 1.0) * factor, uv.y + (rand(vec2(1.0) - seed) * 2.0 - 1.0) * factor, 0.0, 1.0);
+    vec4 color = vec4(uv.x, uv.y, 0.0, 1.0);
 
     gl_FragColor = color;
 }
