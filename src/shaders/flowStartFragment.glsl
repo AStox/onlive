@@ -24,12 +24,13 @@ void main() {
     vec2 resolution = (u_resolution / u_granularity);
     vec2 uv = (gl_FragCoord.xy / u_resolution);
     float num = 0.2;
-    float factor = 0.25;
     vec2 seed = uv / num + num/2.0;
-    // uv = floor(uv);
-    // uv = uv / u_granularity;
+    float factor = 0.25;
+    
     // vec4 color = vec4(uv.x + (rand(seed) * 2.0 - 1.0) * factor, uv.y + (rand(vec2(1.0) - seed) * 2.0 - 1.0) * factor, 0.0, 1.0);
-    vec4 color = vec4(uv.x, uv.y, 0.0, 1.0);
+    // vec4 color = vec4(uv.x, uv.y, 0.0, 1.0);
+    // random
+    vec4 color = vec4(rand(seed), rand(vec2(1.0) - seed), 0.0, 1.0);
 
     gl_FragColor = color;
 }
