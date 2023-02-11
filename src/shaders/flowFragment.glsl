@@ -94,18 +94,18 @@ void main() {
     vec2 uv = (gl_FragCoord.xy / u_resolution);
 
     // First pixel data
-    float posX = texture2D(flowTexture, uv).r;
-    float posY = texture2D(flowTexture, uv).g;
+    float posX = texture2D(flowTexture, vec2(0.0, uv.y)).r;
+    float posY = texture2D(flowTexture, vec2(0.0, uv.y)).g;
     // float speed = initialSpeed;
-    float speed = texture2D(flowTexture, uv).b;
+    float speed = texture2D(flowTexture, vec2(0.0, uv.y)).b;
     // float water = initialWaterVolume;
-    float water = texture2D(flowTexture, uv).a;
+    float water = texture2D(flowTexture, vec2(0.0, uv.y)).a;
 
     // Second pixel data
-    float dirX = texture2D(flowTexture, uv + vec2(1.0,0.0)).r;
-    float dirY = texture2D(flowTexture, uv + vec2(1.0,0.0)).g;
+    float dirX = texture2D(flowTexture, vec2(1.0, uv.y)).r;
+    float dirY = texture2D(flowTexture, vec2(1.0, uv.y)).g;
     // float sediment = 0.0;
-    float sediment = texture2D(flowTexture, uv + vec2(1.0,0.0)).b;
+    float sediment = texture2D(flowTexture, vec2(1.0, uv.y)).b;
     // float deltaSediment = text
 
 
@@ -176,7 +176,12 @@ void main() {
     // }
     // startX = gl_FragCoord.x / u_resolution.x;
     // startY = gl_FragCoord.y / u_resolution.y;
-    vec4 color = vec4(posX, posY, speed, water);
+    vec4 color;
+    if (uv.x < 0.5) {
+        color = vec4(posX, posY, speed, water);
+    } else {
+        color = vec4(dirX, dirY, sediment, deltaSediment);
+    }
     // color = vec4(startX, startY, 0.0, 1.0);
     gl_FragColor = color;
 }
