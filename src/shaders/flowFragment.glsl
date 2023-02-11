@@ -71,32 +71,43 @@ float dist(vec2 vect1, vec2 vect2) {
 }
 
 void main() {
-    // Set the output color to black
+
+    // For each droplet, we create 2 pixels in the render texture. The x position of which determines what data it contains,
+    // the Y position determines what droplet it is.
+
+    // So for each pass of this shader, we check the UVs (0.0,Y) and (1.0, Y) for all the data, then when we're done and outputting
+    // colour values, we check the X value of the current frag Coordinate and output the correct data based on what pixel it's outputting to.
+
+    // x = 0.0
+    // R = posX
+    // G = posY
+    // B = speed
+    // A = water
+
+    // x = 1.0   
+    // R = dirX
+    // G = dirY
+    // B = sediment
+    // A = deltaSediment
+
+    float pixelIndex = gl_FragCoord.x + gl_FragCoord.y * u_resolution.x;
     vec2 uv = (gl_FragCoord.xy / u_resolution);
-    // vec4 color = texture2D(noiseTexture, uv);
 
-    // Create water droplet at random point on map
-    // if randomPos is negative, use the colour of 0,0 as the position
-    float startX = 0.0;
-    float startY = 0.0;
+    // First pixel data
+    float posX = texture2D(flowTexture, uv).r;
+    float posY = texture2D(flowTexture, uv).g;
+    // float speed = initialSpeed;
+    float speed = texture2D(flowTexture, uv).b;
+    // float water = initialWaterVolume;
+    float water = texture2D(flowTexture, uv).a;
 
-    // if (texture2D(flowTexture, vec2(1.0,1.0)).r > 0.0) {
-    startX = texture2D(flowTexture, uv).r;
-    startY = texture2D(flowTexture, uv).g;
-    // } else {
-    //     startX = gl_FragCoord.x / u_resolution.x;
-    //     startY = gl_FragCoord.y / u_resolution.y;
-        // startX = randomPos.x;
-        // startY = randomPos.y;
-    // }
-    float posX = startX;
-    float posY = startY;
+    // Second pixel data
+    float dirX = texture2D(flowTexture, uv + vec2(1.0,0.0)).r;
+    float dirY = texture2D(flowTexture, uv + vec2(1.0,0.0)).g;
+    // float sediment = 0.0;
+    float sediment = texture2D(flowTexture, uv + vec2(1.0,0.0)).b;
+    // float deltaSediment = text
 
-    float dirX = 0.0;
-    float dirY = 0.0;
-    float speed = initialSpeed;
-    float water = initialWaterVolume;
-    float sediment = 0.0;
 
     // Calculate droplet's height and direction of flow with bilinear interpolation of surrounding heights
     float startDist = 5.0;
@@ -165,7 +176,7 @@ void main() {
     // }
     // startX = gl_FragCoord.x / u_resolution.x;
     // startY = gl_FragCoord.y / u_resolution.y;
-    vec4 color = vec4(posX, posY, 0.0, 1.0);
+    vec4 color = vec4(posX, posY, speed, water);
     // color = vec4(startX, startY, 0.0, 1.0);
     gl_FragColor = color;
 }
