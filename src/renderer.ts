@@ -104,7 +104,7 @@ export class Renderer {
     this.setupVertexShader(gl, program);
 
     var resolutionUniformLocation = gl.getUniformLocation(program, "u_resolution");
-    gl.uniform2f(resolutionUniformLocation, this.flowResolution, this.flowResolution);
+    gl.uniform2f(resolutionUniformLocation, 2, this.flowResolution);
 
     var granularityUniformLocation = gl.getUniformLocation(program, "u_granularity");
     gl.uniform1f(granularityUniformLocation, gl.canvas.width);
@@ -125,7 +125,7 @@ export class Renderer {
       gl.UNSIGNED_BYTE,
       null
     );
-    gl.viewport(0, 0, this.flowResolution, this.flowResolution);
+    gl.viewport(0, 0, 2, this.flowResolution);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
