@@ -314,9 +314,9 @@ export class Renderer {
     newAlteredNoiseTexture = this.renderPaintedNoise(noise, newFlow, alteredNoise);
     this.renderDebug(newAlteredNoiseTexture);
 
-    requestAnimationFrame(() =>
-      setTimeout(() => this.erode(noise, newFlow, newAlteredNoiseTexture, -1, -1), 1000 / 24)
-    );
+    // requestAnimationFrame(() =>
+    //   setTimeout(() => this.erode(noise, newFlow, newAlteredNoiseTexture, -1, -1), 1000 / 24)
+    // );
     this.iteration++;
   }
 

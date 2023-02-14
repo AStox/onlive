@@ -13,5 +13,5 @@
   "MAP_COLOUR_LEVELS": 25,
   "DEBUG": false,
 
-  "FLOW_RESOLUTION": 50
+  "FLOW_RESOLUTION": 4
 }

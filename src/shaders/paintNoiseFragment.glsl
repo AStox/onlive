@@ -30,7 +30,7 @@ void main() {
             vec2 pos = texture2D(flowTexture, flowUV * ratio).rg;
             float radius = dist(uv, pos);
             float maxRadius = 0.005;
-            float amount = 0.02;
+            float amount = 0.2;
             if (radius < maxRadius) {
                 float a = pow(radius/maxRadius, 2.0);
                 color = color + ((vec4(a, a, a, 1.0) - vec4(1.0)) * amount);
