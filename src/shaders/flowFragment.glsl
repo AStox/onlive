@@ -109,6 +109,9 @@ void main() {
     // float deltaSediment = text
 
 
+    float startX = posX;
+    float startY = posY;
+
     // Calculate droplet's height and direction of flow with bilinear interpolation of surrounding heights
     float startDist = 5.0;
     vec4 heightAndGradient;
@@ -182,6 +185,6 @@ void main() {
     } else {
         color = vec4(dirX, dirY, sediment, deltaSediment);
     }
-    // color = vec4(startX, startY, 0.0, 1.0);
+    color = vec4(startX, startY, 0.0, 1.0);
     gl_FragColor = color;
 }

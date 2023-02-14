@@ -23,14 +23,10 @@ float rand(vec2 co){
 void main() {
     vec2 resolution = (u_resolution / u_granularity);
     vec2 uv = (gl_FragCoord.xy / u_resolution);
-    float num = 0.2;
-    vec2 seed = uv / num + num/2.0;
+    float num = 8.72;
+    vec2 seed = vec2(uv.x, uv.y) / num + num/2.0;
     float factor = 0.25;
     
-    // vec4 color = vec4(uv.x + (rand(seed) * 2.0 - 1.0) * factor, uv.y + (rand(vec2(1.0) - seed) * 2.0 - 1.0) * factor, 0.0, 1.0);
-    // vec4 color = vec4(uv.x, uv.y, 0.0, 1.0);
-    // random
-
     // x = 0.0
     // R = posX
     // G = posY
@@ -45,7 +41,13 @@ void main() {
 
     vec4 color;
     if (uv.x < 0.5) {
-        color = vec4(rand(seed), rand(vec2(1.0) - seed), 0.0, 0.0);
+    //  color = vec4(uv.x + (rand(seed) * 2.0 - 1.0) * factor, uv.y + (rand(vec2(1.0) - seed) * 2.0 - 1.0) * factor, 0.0, 1.0);
+    // convert uv.y an x and y coordinate. Interpret the y coordinate as the 1D array index where uv.y = index * 
+
+        // convert 1d index uv.y to 2d x and y coordinate using the resolution
+        vec2 pos = vec2(mod(gl_FragCoord.y, u_resolution.x), floor(gl_FragCoord.y / u_resolution.x));
+        color = vec4(pos, 0.0, 0.0);
+        // color = vec4(rand(seed), rand(100.0 * seed), 0.0, 0.0);
     } else {
         color = vec4(0.0, 0.0, 0.0, 0.0);
     }
