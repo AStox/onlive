@@ -47,11 +47,11 @@ void main() {
     // convert uv.y an x and y coordinate. Interpret the y coordinate as the 1D array index where uv.y = index * 
 
         // convert 1d index uv.y to 2d x and y coordinate using the resolution
-        vec2 pos = vec2(mod(gl_FragCoord.y, columnCount)/columnCount, floor(gl_FragCoord.y / columnCount));
+        vec2 pos = vec2(mod(gl_FragCoord.y, columnCount)/columnCount, (floor(gl_FragCoord.y / columnCount) + 0.5)/columnCount);
         // vec2 pos = gl_FragCoord.xy;
         // color = vec4(uv, 0.0, 1.0);
         // color = vec4(rand(seed), rand(100.0 * seed), 0.0, 0.0);
-        color = vec4(pos.x, 0.5, 0.0, 1.0);
+        color = vec4(pos.x, pos.y, 0.0, 1.0);
     } else {
         color = vec4(0.0, 0.0, 0.0, 0.0);
     }
