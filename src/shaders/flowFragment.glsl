@@ -185,6 +185,5 @@ void main() {
     } else {
         color = vec4(dirX, dirY, sediment, deltaSediment);
     }
-    color = vec4(startX, startY, 0.0, 1.0);
     gl_FragColor = color;
 }
