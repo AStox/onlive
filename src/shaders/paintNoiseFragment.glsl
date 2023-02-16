@@ -25,7 +25,7 @@ void main() {
         // from 0 to 1, reads the R & G channels from the flow texture
         // reads the R & G channels from the flow texture.
         // flowUV is in flow coordinates, so we need to convert it to the uv coords of the render texture using ratio
-        vec2 pos = texture2D(flowTexture, vec2(flowY * ratio.x, 0.0)).rg;
+        vec2 pos = texture2D(flowTexture, vec2(0.0, flowY * ratio.y)).rg;
         float radius = dist(uv, pos);
         float maxRadius = 0.005;
         float amount = 0.2;
