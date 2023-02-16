@@ -18,23 +18,20 @@ void main() {
     vec2 ratio = u_flowResolution / u_resolution;
 
     // for every pixel of the flowTexture, check if the distance between that pixel and the current pixel is less than a certain amount
-    for (float i = 0.0; i < maxFlowResolution; i++) {
-        if (i >= u_flowResolution.x) break;
-        for (float j = 0.0; j < maxFlowResolution; j++) {
-            if (j >= u_flowResolution.y) break;
+    for (float y = 0.0; y < maxFlowResolution; y++) {
+        if (y >= u_flowResolution.y) break;
 
-            vec2 flowUV = vec2(i / u_flowResolution.x, j / u_flowResolution.y);     // from 0 to 1
-            // from 0 to 1, reads the R & G channels from the flow texture
-            // reads the R & G channels from the flow texture.
-            // flowUV is in flow coordinates, so we need to convert it to the uv coords of the render texture using ratio
-            vec2 pos = texture2D(flowTexture, flowUV * ratio).rg;
-            float radius = dist(uv, pos);
-            float maxRadius = 0.005;
-            float amount = 0.2;
-            if (radius < maxRadius) {
-                float a = pow(radius/maxRadius, 2.0);
-                color = color + ((vec4(a, a, a, 1.0) - vec4(1.0)) * amount);
-            }
+        float flowY = y / u_flowResolution.y; // from 0 to 1
+        // from 0 to 1, reads the R & G channels from the flow texture
+        // reads the R & G channels from the flow texture.
+        // flowUV is in flow coordinates, so we need to convert it to the uv coords of the render texture using ratio
+        vec2 pos = texture2D(flowTexture, vec2(flowY * ratio.x, 0.0)).rg;
+        float radius = dist(uv, pos);
+        float maxRadius = 0.005;
+        float amount = 0.2;
+        if (radius < maxRadius) {
+            float a = pow(radius/maxRadius, 2.0);
+            color = color + ((vec4(a, a, a, 1.0) - vec4(1.0)) * amount);
         }
     }
     gl_FragColor = color;

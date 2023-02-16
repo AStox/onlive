@@ -222,7 +222,7 @@ export class Renderer {
     gl.uniform1i(noiseLocation, 0);
 
     const flowResolutionLocation = gl.getUniformLocation(program, "u_flowResolution");
-    gl.uniform2f(flowResolutionLocation, this.flowResolution, this.flowResolution);
+    gl.uniform2f(flowResolutionLocation, 2, this.flowResolution);
 
     gl.activeTexture(gl.TEXTURE1);
     gl.bindTexture(gl.TEXTURE_2D, flow);
