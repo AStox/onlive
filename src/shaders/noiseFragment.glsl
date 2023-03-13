@@ -1,6 +1,8 @@
+#version 300 es
 
 precision highp float;
 uniform vec2 u_resolution;
+out vec4 fragColor;
 
 //
 // Description : Array and textureless GLSL 2D simplex noise function.
@@ -88,5 +90,5 @@ void main() {
     noise = (noise+1.0)/2.0;
 
     // Set the final pixel color
-    gl_FragColor = vec4(noise, noise, noise, 1.0);
+    fragColor = vec4(noise, noise, noise, 1.0);
 }

@@ -15,6 +15,7 @@ export class Renderer {
   iteration = 0;
   maxIterations = 40;
   flowResolution = config.FLOW_RESOLUTION;
+  ext: any;
 
   constructor(width: number, height: number, map: TerrainMap) {
     this.canvas = document.createElement("canvas");
@@ -22,6 +23,11 @@ export class Renderer {
     this.canvas.setAttribute("width", `${width}`);
     this.canvas.setAttribute("height", `${height}`);
     this.gl = this.canvas.getContext("webgl2");
+    this.ext = this.gl.getExtension("EXT_color_buffer_float");
+
+    if (!this.ext) {
+      console.error("Color buffer float not supported");
+    }
     this.map = map;
   }
 
@@ -114,18 +120,31 @@ export class Renderer {
     const renderTexture = gl.createTexture();
     gl.activeTexture(gl.TEXTURE0);
     gl.bindTexture(gl.TEXTURE_2D, renderTexture);
+    // gl.texImage2D(
+    //   gl.TEXTURE_2D,
+    //   0,
+    //   gl.RGBA,
+    //   gl.canvas.width,
+    //   gl.canvas.height,
+    //   0,
+    //   gl.RGBA,
+    //   gl.UNSIGNED_BYTE,
+    //   null
+    // );
+
     gl.texImage2D(
       gl.TEXTURE_2D,
       0,
-      gl.RGBA,
+      gl.RGBA32F,
       gl.canvas.width,
       gl.canvas.height,
       0,
       gl.RGBA,
-      gl.UNSIGNED_BYTE,
+      gl.FLOAT,
       null
     );
-    gl.viewport(0, 0, 2, this.flowResolution);
+
+    // gl.viewport(0, 0, 2, this.flowResolution);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
@@ -175,15 +194,26 @@ export class Renderer {
     let renderTexture = gl.createTexture();
     gl.activeTexture(gl.TEXTURE2);
     gl.bindTexture(gl.TEXTURE_2D, renderTexture);
+    // gl.texImage2D(
+    //   gl.TEXTURE_2D,
+    //   0,
+    //   gl.RGBA,
+    //   gl.canvas.width,
+    //   gl.canvas.height,
+    //   0,
+    //   gl.RGBA,
+    //   gl.UNSIGNED_BYTE,
+    //   null
+    // );
     gl.texImage2D(
       gl.TEXTURE_2D,
       0,
-      gl.RGBA,
+      gl.RGBA32F,
       gl.canvas.width,
       gl.canvas.height,
       0,
       gl.RGBA,
-      gl.UNSIGNED_BYTE,
+      gl.FLOAT,
       null
     );
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
@@ -276,6 +306,20 @@ export class Renderer {
 
     this.setupVertexShader(gl, program);
 
+    // gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+
+    // gl.bindTexture(gl.TEXTURE_2D, flow);
+
+    // Create a framebuffer object
+    // const fbo = gl.createFramebuffer();
+    // gl.bindFramebuffer(gl.FRAMEBUFFER, fbo);
+
+    // Attach the texture to the framebuffer object
+    // gl.activeTexture(gl.TEXTURE1);
+    // gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, flow, 0);
+
+    // Unbind the texture and the framebuffer object
+    // gl.bindTexture(gl.TEXTURE_2D, null);
     gl.bindFramebuffer(gl.FRAMEBUFFER, null);
 
     gl.activeTexture(gl.TEXTURE0);
@@ -310,13 +354,15 @@ export class Renderer {
       flow = this.renderFlowStart();
     }
     let newAlteredNoiseTexture: WebGLTexture;
-    const newFlow = this.renderFlow(noise, flow);
-    newAlteredNoiseTexture = this.renderPaintedNoise(noise, newFlow, alteredNoise);
-    this.renderDebug(newAlteredNoiseTexture);
+    let newFlow: WebGLTexture;
+    // newFlow = this.renderFlow(noise, flow);
+    newFlow = flow;
+    // newAlteredNoiseTexture = this.renderPaintedNoise(noise, newFlow, alteredNoise);
+    this.renderDebug(noise);
 
-    requestAnimationFrame(() =>
-      setTimeout(() => this.erode(noise, newFlow, newAlteredNoiseTexture, -1, -1), 1000 / 24)
-    );
+    // requestAnimationFrame(() =>
+    //   setTimeout(() => this.erode(noise, newFlow, newAlteredNoiseTexture, -1, -1), 1000 / 24)
+    // );
     this.iteration++;
   }
 
@@ -333,14 +379,14 @@ export class Renderer {
   }
 
   // Save the pixels to a 1D array.
-  savePixels(gl: WebGLRenderingContext): Uint8Array {
+  savePixels(gl: WebGL2RenderingContext): Uint8Array {
     const buffer = new Uint8Array(gl.canvas.width * gl.canvas.height * 4);
     gl.readPixels(0, 0, gl.canvas.width, gl.canvas.height, gl.RGBA, gl.UNSIGNED_BYTE, buffer);
 
     return buffer;
   }
 
-  createShader(gl: WebGLRenderingContext, type: number, source: string) {
+  createShader(gl: WebGL2RenderingContext, type: number, source: string) {
     var shader = gl.createShader(type);
     gl.shaderSource(shader, source);
     gl.compileShader(shader);
@@ -356,7 +402,11 @@ export class Renderer {
     gl.deleteShader(shader);
   }
 
-  createProgram(gl: WebGLRenderingContext, vertexShader: WebGLShader, fragmentShader: WebGLShader) {
+  createProgram(
+    gl: WebGL2RenderingContext,
+    vertexShader: WebGLShader,
+    fragmentShader: WebGLShader
+  ) {
     var program = gl.createProgram();
     gl.attachShader(program, vertexShader);
     gl.attachShader(program, fragmentShader);
@@ -413,7 +463,7 @@ export class Renderer {
   }
 }
 
-function printUniform(gl: WebGLRenderingContext, program: WebGLProgram, name: string) {
+function printUniform(gl: WebGL2RenderingContext, program: WebGLProgram, name: string) {
   // Get the location of the uniform variable in the shader
   var location = gl.getUniformLocation(program, name);
 
@@ -424,7 +474,7 @@ function printUniform(gl: WebGLRenderingContext, program: WebGLProgram, name: st
   console.log(name + " = " + value);
 }
 
-function printAttribute(gl: WebGLRenderingContext, program: WebGLProgram, name: string) {
+function printAttribute(gl: WebGL2RenderingContext, program: WebGLProgram, name: string) {
   // Get the location of the uniform variable in the shader
   var location = gl.getAttribLocation(program, name);
 

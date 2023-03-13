@@ -1,7 +1,8 @@
+#version 300 es
+
 precision highp float;
 
-varying vec2 vUv;
-
+out vec4 fragColor;
 // uniform sampler2D u_texture;
 uniform vec2 u_resolution;
 uniform float u_granularity;
@@ -55,9 +56,10 @@ void main() {
     } else {
         color = vec4(0.0, 0.0, 0.0, 0.0);
     }
+    color = vec4(uv, 0.0, 1.0);
     // color = vec4(gl_FragCoord.xy, 0.0, 1.0);
     // vec2 pos = gl_FragCoord.xy;
     // color = vec4(pos, 0.0, 1.0);
-    gl_FragColor = color;
+    fragColor = color;
 }
 
