@@ -13,8 +13,8 @@ export class Renderer {
   paintNoiseFragment = require("./shaders/paintNoiseFragment.glsl");
   debugFragment = require("./shaders/debugFragment.glsl");
   iteration = 0;
-  maxIterations = 40;
-  flowResolution = config.FLOW_RESOLUTION;
+  maxIterations = 100;
+  dropletCount = config.DROPLET_COUNT;
   ext: any;
 
   constructor(width: number, height: number, map: TerrainMap) {
@@ -228,8 +228,8 @@ export class Renderer {
     const noiseLocation = gl.getUniformLocation(program, "noiseTexture");
     gl.uniform1i(noiseLocation, 0);
 
-    const flowResolutionLocation = gl.getUniformLocation(program, "u_flowResolution");
-    gl.uniform2f(flowResolutionLocation, 2, this.flowResolution);
+    const dropletCountLocation = gl.getUniformLocation(program, "u_dropletCount");
+    gl.uniform2f(dropletCountLocation, 2, this.dropletCount);
 
     gl.activeTexture(gl.TEXTURE1);
     gl.bindTexture(gl.TEXTURE_2D, flow);
