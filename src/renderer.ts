@@ -29,6 +29,11 @@ export class Renderer {
       console.error("Color buffer float not supported");
     }
     this.map = map;
+
+    const ext_float_linear = this.gl.getExtension("OES_texture_float_linear");
+    if (!ext_float_linear) {
+      console.error("OES_texture_float_linear is not supported");
+    }
   }
 
   run() {
@@ -63,7 +68,6 @@ export class Renderer {
     var resolutionUniformLocation = gl.getUniformLocation(program, "u_resolution");
     gl.uniform2f(resolutionUniformLocation, gl.canvas.width, gl.canvas.height);
 
-    // Render to a framebuffer
     let fbo = gl.createFramebuffer();
     gl.bindFramebuffer(gl.FRAMEBUFFER, fbo);
     const noiseTexture = gl.createTexture();
@@ -72,12 +76,12 @@ export class Renderer {
     gl.texImage2D(
       gl.TEXTURE_2D,
       0,
-      gl.RGBA,
+      gl.RGBA32F,
       gl.canvas.width,
       gl.canvas.height,
       0,
       gl.RGBA,
-      gl.UNSIGNED_BYTE,
+      gl.FLOAT,
       null
     );
     gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
@@ -110,7 +114,7 @@ export class Renderer {
     this.setupVertexShader(gl, program);
 
     var resolutionUniformLocation = gl.getUniformLocation(program, "u_resolution");
-    gl.uniform2f(resolutionUniformLocation, 2, this.flowResolution);
+    gl.uniform2f(resolutionUniformLocation, 2, this.dropletCount);
 
     var granularityUniformLocation = gl.getUniformLocation(program, "u_granularity");
     gl.uniform1f(granularityUniformLocation, gl.canvas.width);
@@ -120,17 +124,6 @@ export class Renderer {
     const renderTexture = gl.createTexture();
     gl.activeTexture(gl.TEXTURE0);
     gl.bindTexture(gl.TEXTURE_2D, renderTexture);
-    // gl.texImage2D(
-    //   gl.TEXTURE_2D,
-    //   0,
-    //   gl.RGBA,
-    //   gl.canvas.width,
-    //   gl.canvas.height,
-    //   0,
-    //   gl.RGBA,
-    //   gl.UNSIGNED_BYTE,
-    //   null
-    // );
 
     gl.texImage2D(
       gl.TEXTURE_2D,
@@ -144,7 +137,6 @@ export class Renderer {
       null
     );
 
-    // gl.viewport(0, 0, 2, this.flowResolution);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
@@ -166,9 +158,6 @@ export class Renderer {
 
     this.setupVertexShader(gl, program);
 
-    // var randomPosUniformLocation = gl.getUniformLocation(program, "randomPos");
-    // gl.uniform2f(randomPosUniformLocation, randomX, randomY);
-
     var resolutionUniformLocation = gl.getUniformLocation(program, "u_resolution");
     gl.uniform2f(resolutionUniformLocation, gl.canvas.width, gl.canvas.height);
 
@@ -184,7 +173,6 @@ export class Renderer {
     const noiseLocation = gl.getUniformLocation(program, "noiseTexture");
     gl.uniform1i(noiseLocation, 0);
 
-    console.log("using existing flow texture");
     gl.activeTexture(gl.TEXTURE1);
     gl.bindTexture(gl.TEXTURE_2D, flow);
 
@@ -194,17 +182,6 @@ export class Renderer {
     let renderTexture = gl.createTexture();
     gl.activeTexture(gl.TEXTURE2);
     gl.bindTexture(gl.TEXTURE_2D, renderTexture);
-    // gl.texImage2D(
-    //   gl.TEXTURE_2D,
-    //   0,
-    //   gl.RGBA,
-    //   gl.canvas.width,
-    //   gl.canvas.height,
-    //   0,
-    //   gl.RGBA,
-    //   gl.UNSIGNED_BYTE,
-    //   null
-    // );
     gl.texImage2D(
       gl.TEXTURE_2D,
       0,
@@ -306,20 +283,6 @@ export class Renderer {
 
     this.setupVertexShader(gl, program);
 
-    // gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-
-    // gl.bindTexture(gl.TEXTURE_2D, flow);
-
-    // Create a framebuffer object
-    // const fbo = gl.createFramebuffer();
-    // gl.bindFramebuffer(gl.FRAMEBUFFER, fbo);
-
-    // Attach the texture to the framebuffer object
-    // gl.activeTexture(gl.TEXTURE1);
-    // gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, flow, 0);
-
-    // Unbind the texture and the framebuffer object
-    // gl.bindTexture(gl.TEXTURE_2D, null);
     gl.bindFramebuffer(gl.FRAMEBUFFER, null);
 
     gl.activeTexture(gl.TEXTURE0);
@@ -331,9 +294,6 @@ export class Renderer {
     gl.uniform1i(textureLocation, 0);
 
     gl.drawArrays(gl.TRIANGLES, 0, 6);
-    // let pixels = new Uint8Array(4 * gl.canvas.width * gl.canvas.height);
-    // gl.readPixels(0, 0, gl.canvas.width, gl.canvas.height, gl.RGBA, gl.UNSIGNED_BYTE, pixels);
-    // console.log("NOISE TEXTURE:", pixels);
   }
 
   erode(
@@ -355,18 +315,17 @@ export class Renderer {
     }
     let newAlteredNoiseTexture: WebGLTexture;
     let newFlow: WebGLTexture;
-    // newFlow = this.renderFlow(noise, flow);
-    newFlow = flow;
-    // newAlteredNoiseTexture = this.renderPaintedNoise(noise, newFlow, alteredNoise);
-    this.renderDebug(noise);
+    newFlow = this.renderFlow(noise, flow);
+    newAlteredNoiseTexture = this.renderPaintedNoise(noise, newFlow, alteredNoise);
+    this.renderDebug(newAlteredNoiseTexture);
 
-    // requestAnimationFrame(() =>
-    //   setTimeout(() => this.erode(noise, newFlow, newAlteredNoiseTexture, -1, -1), 1000 / 24)
-    // );
+    requestAnimationFrame(() =>
+      setTimeout(() => this.erode(noise, newFlow, newAlteredNoiseTexture, -1, -1), 1000 / 60)
+    );
     this.iteration++;
   }
 
-  setupVertexShader(gl: WebGLRenderingContext, program: WebGLProgram) {
+  setupVertexShader(gl: WebGL2RenderingContext, program: WebGLProgram) {
     var resolutionUniformLocation = gl.getUniformLocation(program, "u_resolution");
     gl.uniform2f(resolutionUniformLocation, gl.canvas.width, gl.canvas.height);
     var positionBuffer = gl.createBuffer();
@@ -392,7 +351,6 @@ export class Renderer {
     gl.compileShader(shader);
     var success = gl.getShaderParameter(shader, gl.COMPILE_STATUS);
     if (success) {
-      // console.log("compiled shader");
       return shader;
     } else {
       console.log(gl.getShaderInfoLog(shader));
@@ -461,26 +419,4 @@ export class Renderer {
     const y2 = y + height;
     return [x1, y1, x2, y1, x1, y2, x1, y2, x2, y1, x2, y2];
   }
-}
-
-function printUniform(gl: WebGL2RenderingContext, program: WebGLProgram, name: string) {
-  // Get the location of the uniform variable in the shader
-  var location = gl.getUniformLocation(program, name);
-
-  // Get the value of the uniform variable
-  var value = gl.getUniform(program, location);
-
-  // Print the value to the browser console
-  console.log(name + " = " + value);
-}
-
-function printAttribute(gl: WebGL2RenderingContext, program: WebGLProgram, name: string) {
-  // Get the location of the uniform variable in the shader
-  var location = gl.getAttribLocation(program, name);
-
-  // Get the value of the uniform variable
-  var value = gl.getActiveAttrib(program, location);
-
-  // Print the value to the browser console
-  console.log(name + " = " + value);
 }

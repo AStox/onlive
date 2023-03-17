@@ -1,9 +1,12 @@
+#version 300 es
+
 precision highp float;
 
 #define PI 3.1415926535897932384626433832795
 #define maxDropletLifetime 30
 
-varying vec2 vUv;
+in vec2 vUv;
+out vec4 fragColor;
 
 float seaLevel = 0.1;
 float erosionRadius = 5.0;
@@ -45,10 +48,10 @@ vec4 CalculateHeightAndGradient(sampler2D noiseTexture, vec2 mapSize, float posX
   y1 = clamp(y1, 0.0, u_resolution.y - 0.001);
 
   // Calculate the heights of the surrounding points
-  float h00 = texture2D(noiseTexture, vec2(x0,y0)).r;
-  float h01 = texture2D(noiseTexture, vec2(x0,y1)).r;
-  float h10 = texture2D(noiseTexture, vec2(x1,y0)).r;
-  float h11 = texture2D(noiseTexture, vec2(x1,y1)).r;
+  float h00 = texture(noiseTexture, vec2(x0,y0)).r;
+  float h01 = texture(noiseTexture, vec2(x0,y1)).r;
+  float h10 = texture(noiseTexture, vec2(x1,y0)).r;
+  float h11 = texture(noiseTexture, vec2(x1,y1)).r;
 
   // Calculate the weights for the surrounding heights
   float x = posX - float(x0);
@@ -94,18 +97,18 @@ void main() {
     vec2 uv = (gl_FragCoord.xy / u_resolution);
 
     // First pixel data
-    float posX = texture2D(flowTexture, vec2(0.0, uv.y)).r;
-    float posY = texture2D(flowTexture, vec2(0.0, uv.y)).g;
+    float posX = texture(flowTexture, vec2(0.0, uv.y)).r;
+    float posY = texture(flowTexture, vec2(0.0, uv.y)).g;
     // float speed = initialSpeed;
-    float speed = texture2D(flowTexture, vec2(0.0, uv.y)).b;
+    float speed = texture(flowTexture, vec2(0.0, uv.y)).b;
     // float water = initialWaterVolume;
-    float water = texture2D(flowTexture, vec2(0.0, uv.y)).a;
+    float water = texture(flowTexture, vec2(0.0, uv.y)).a;
 
     // Second pixel data
-    float dirX = texture2D(flowTexture, vec2(1.0, uv.y)).r;
-    float dirY = texture2D(flowTexture, vec2(1.0, uv.y)).g;
+    float dirX = texture(flowTexture, vec2(1.0, uv.y)).r;
+    float dirY = texture(flowTexture, vec2(1.0, uv.y)).g;
     // float sediment = 0.0;
-    float sediment = texture2D(flowTexture, vec2(1.0, uv.y)).b;
+    float sediment = texture(flowTexture, vec2(1.0, uv.y)).b;
     // float deltaSediment = text
 
 
@@ -185,5 +188,5 @@ void main() {
     } else {
         color = vec4(dirX, dirY, sediment, deltaSediment);
     }
-    gl_FragColor = color;
+    fragColor = color;
 }

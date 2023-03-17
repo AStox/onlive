@@ -3,19 +3,8 @@
 precision highp float;
 
 out vec4 fragColor;
-// uniform sampler2D u_texture;
-uniform vec2 u_resolution;
+uniform vec2 u_resolution;  // number of droplets
 uniform float u_granularity;
-
-// void main() {
-//     vec2 resolution = (u_resolution / u_granularity);
-//     vec2 uv = (gl_FragCoord.xy / resolution);
-//     uv = floor(uv);
-//     uv = uv / u_granularity;
-//     vec4 color = vec4(uv.x, uv.y, 0.0, 1.0);
-
-//     gl_FragColor = color;
-// }
 
 float rand(vec2 co){
     return fract(sin(dot(co, vec2(12.9898, 78.233))) * 43758.5453);
@@ -27,7 +16,7 @@ void main() {
     vec2 uv = (gl_FragCoord.xy / u_resolution);
     float num = 8.72;
     vec2 seed = vec2(uv.x, uv.y) / num + num/2.0;
-    float factor = 0.25;
+    float factor = 0.015;
     
     // x = 0.0
     // R = posX
@@ -52,11 +41,11 @@ void main() {
         // vec2 pos = gl_FragCoord.xy;
         // color = vec4(uv, 0.0, 1.0);
         // color = vec4(rand(seed), rand(100.0 * seed), 0.0, 0.0);
-        color = vec4(pos.x, pos.y, 0.0, 1.0);
+        color = vec4(pos.x + (rand(seed) * 2.0 - 1.0) * factor, pos.y + (rand(vec2(1.0) - seed) * 2.0 - 1.0) * factor, 0.0, 1.0);
     } else {
         color = vec4(0.0, 0.0, 0.0, 0.0);
     }
-    color = vec4(uv, 0.0, 1.0);
+    // color = vec4(uv, 0.0, 1.0);
     // color = vec4(gl_FragCoord.xy, 0.0, 1.0);
     // vec2 pos = gl_FragCoord.xy;
     // color = vec4(pos, 0.0, 1.0);

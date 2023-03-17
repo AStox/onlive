@@ -8,7 +8,8 @@ uniform sampler2D noiseTexture;
 uniform sampler2D flowTexture;
 uniform sampler2D alteredNoiseTexture;
 uniform vec2 u_resolution;
-uniform vec2 u_flowResolution;
+uniform vec2 u_dropletCount;
+uniform vec2 u_maxRadius;
 
 const float maxFlowResolution = 1000.0;
 
@@ -19,13 +20,13 @@ float dist(vec2 vect1, vec2 vect2) {
 void main() {
     vec2 uv = (gl_FragCoord.xy / u_resolution);
     vec4 color = texture(alteredNoiseTexture, uv);
-    vec2 ratio = u_flowResolution / u_resolution;
+    vec2 ratio = u_dropletCount / u_resolution;
 
     // for every pixel of the flowTexture, check if the distance between that pixel and the current pixel is less than a certain amount
     for (float y = 0.0; y < maxFlowResolution; y++) {
-        if (y >= u_flowResolution.y) break;
+        if (y >= u_dropletCount.y) break;
 
-        float flowY = y / u_flowResolution.y; // from 0 to 1
+        float flowY = y / u_dropletCount.y; // from 0 to 1
         // from 0 to 1, reads the R & G channels from the flow texture
         // reads the R & G channels from the flow texture.
         // flowUV is in flow coordinates, so we need to convert it to the uv coords of the render texture using ratio
