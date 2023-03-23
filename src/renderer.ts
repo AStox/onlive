@@ -13,8 +13,11 @@ export class Renderer {
   paintNoiseFragment = require("./shaders/paintNoiseFragment.glsl");
   debugFragment = require("./shaders/debugFragment.glsl");
   iteration = 0;
-  maxIterations = 100;
+  maxDropLifetime = config.MAX_DROPLET_LIFETIME;
   dropletCount = config.DROPLET_COUNT;
+  randomOffset = config.RANDOM_OFFSET;
+  maxRadius = config.DROPLET_RADIUS;
+  opacity = config.DROPLET_OPACITY;
   ext: any;
 
   constructor(width: number, height: number, map: TerrainMap) {
@@ -118,6 +121,9 @@ export class Renderer {
 
     var granularityUniformLocation = gl.getUniformLocation(program, "u_granularity");
     gl.uniform1f(granularityUniformLocation, gl.canvas.width);
+
+    var randomOffsetUniformLocation = gl.getUniformLocation(program, "u_randomOffset");
+    gl.uniform1f(randomOffsetUniformLocation, this.randomOffset);
 
     let fbo = gl.createFramebuffer();
     gl.bindFramebuffer(gl.FRAMEBUFFER, fbo);
@@ -231,6 +237,12 @@ export class Renderer {
     const dropletCountLocation = gl.getUniformLocation(program, "u_dropletCount");
     gl.uniform2f(dropletCountLocation, 2, this.dropletCount);
 
+    const maxRadiusLocation = gl.getUniformLocation(program, "u_maxRadius");
+    gl.uniform1f(maxRadiusLocation, this.maxRadius);
+
+    const opacityLocation = gl.getUniformLocation(program, "u_opacity");
+    gl.uniform1f(opacityLocation, this.opacity);
+
     gl.activeTexture(gl.TEXTURE1);
     gl.bindTexture(gl.TEXTURE_2D, flow);
 
@@ -306,7 +318,7 @@ export class Renderer {
     // noise = this.renderNoise();
     // let newFlow: WebGLTexture | null;
     // let newAlteredNoiseTexture: WebGLTexture | null;
-    if (this.iteration >= this.maxIterations) {
+    if (this.iteration >= this.maxDropLifetime) {
       return;
     }
     if (this.iteration == 0) {

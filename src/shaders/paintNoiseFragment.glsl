@@ -9,7 +9,8 @@ uniform sampler2D flowTexture;
 uniform sampler2D alteredNoiseTexture;
 uniform vec2 u_resolution;
 uniform vec2 u_dropletCount;
-uniform vec2 u_maxRadius;
+uniform float u_maxRadius;
+uniform float u_opacity;
 
 const float maxFlowResolution = 1000.0;
 
@@ -31,13 +32,15 @@ void main() {
         // reads the R & G channels from the flow texture.
         // flowUV is in flow coordinates, so we need to convert it to the uv coords of the render texture using ratio
         vec2 pos = texture(flowTexture, vec2(0.0, flowY * ratio.y)).rg;
+        float deltaSediment = texture(flowTexture, vec2(1.0, flowY * ratio.y)).b * 50.0;
         float radius = dist(uv, pos);
-        float maxRadius = 0.005;
-        float amount = 0.2;
-        if (radius < maxRadius) {
-            float a = pow(radius/maxRadius, 2.0);
-            color = color + ((vec4(a, a, a, 1.0) - vec4(1.0)) * amount);
+        // float maxRadius = 0.005;
+        // float amount = 0.2;
+        if (radius < u_maxRadius) {
+            float a = pow(radius/u_maxRadius, 2.0);
+            color = color + ((vec4(a, a, a, 1.0) - vec4(1.0)) * u_opacity * deltaSediment);
         }
+
     }
     fragColor = color;
 }
